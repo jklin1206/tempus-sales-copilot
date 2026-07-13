@@ -3,7 +3,7 @@
 Meeting prep for a Tempus territory sales rep.
 **Ranked territory → pick an oncologist → get a grounded brief.**
 
-### ▶ [Live demo](https://tempus-sales-copilot-jklin1206-gmailcoms-projects.vercel.app) · [Spec](SPEC.md) · [Prompt log](prompts/CHANGELOG.md)
+### ▶ [Live demo](https://tempus-sales-copilot-jklin1206-gmailcoms-projects.vercel.app) · [Deck](deck/tempus-sales-copilot.pdf) · [Spec](SPEC.md) · [Prompt log](prompts/CHANGELOG.md)
 
 Every product claim is checked against a sourced fact before it renders.
 If a claim can't be verified, the whole brief is thrown away.

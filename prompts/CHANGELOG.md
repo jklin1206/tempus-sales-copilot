@@ -1,23 +1,18 @@
 # Prompt refinement log
 
 Every runtime-prompt iteration and *why* it changed.
-This is the deck's "validation steps used to refine the solution" evidence, so it records what actually happened, including the two cases where the evaluation was wrong and the model was right.
 
 Eval command: `npm run eval -- --live` (8 golden scenarios).
 
-Numbers are labeled with the model they were measured on. They are never reattributed: a result for
-one model is not evidence about another.
+**Numbers are labeled with the model they were measured on, and they are never reattributed.** A
+result for one model is not evidence about another. That rule is why this file still carries Groq
+numbers even though Groq is no longer in the codebase: the prompt was developed against it, those
+are the scores the iteration actually produced, and relabelling them "Gemini" to match the end state
+would be inventing data.
 
-**Prompt iteration history, all measured on `groq` / `openai/gpt-oss-20b`:**
+## What ships
 
-| Version | Single-shot | With the product's retries | What changed |
-|---|---|---|---|
-| v1 | not run | not run | Initial draft, written before the validator existed. |
-| v2 | **2 / 8** | not measured | Rewritten against the validator contract. |
-| v3 | **5-6 / 8** | **8 / 8** | Driven by the v2 failures below. |
-| v4 | **5-6 / 8** | **8 / 8** | The product pivot: no `why_now`, `why_tempus` instead. |
-
-**The default provider, `google` / `gemini-3.1-flash-lite`, measured on v4:**
+**`google` / `gemini-3.1-flash-lite`**, measured on v4. It is the only provider in the code.
 
 | Mode | Result |
 |---|---|
@@ -25,39 +20,58 @@ one model is not evidence about another.
 | Product mode (one draft, one repair) | **8 / 8** |
 | Deterministic | **8 / 8** |
 
-Gemini is materially better at single-shot compliance than the small Groq model (7-8/8 against 5-6/8) on
-the identical prompt and the identical validator. Both land at 8/8 in the product. The bundled demo briefs
-are recorded on Gemini, since that is the default path.
-
 Both numbers are reported on purpose.
-`npm run eval -- --live` generates each brief **once**, with no repair, which is the honest measure of the prompt.
+`npm run eval -- --live` generates each brief **once**, with no repair. That is the honest measure of the prompt.
 `npm run eval -- --live --product` allows the one repair call a rep actually gets: a rejected draft is shown its failed checks and asked to fix them, once, before the brief is blocked.
 
 Quoting only the second number would flatter the prompt.
 An early v3 run scored 8/8 single-shot and it was tempting to stop there, but repeating the run showed that was a lucky sample.
 
+## How the prompt got here
+
+Every version below was measured on `groq` / `openai/gpt-oss-20b`, which was the development
+provider. The prompt is what changed across these rows; the provider did not.
+
+| Version | Single-shot | With retries | What changed |
+|---|---|---|---|
+| v1 | not run | not run | Initial draft, written before the validator existed. |
+| v2 | **2 / 8** | not measured | Rewritten against the validator contract. |
+| v3 | **5-6 / 8** | **8 / 8** | Driven by the v2 failures below. |
+| v4 | **5-6 / 8** | **8 / 8** | The product pivot: no `why_now`, `why_tempus` instead. |
+
+Pointed at the identical prompt and the identical validator, Gemini is materially better at
+single-shot compliance than the small Groq model: 7-8/8 against 5-6/8. Both reach 8/8 in the product.
+
 ("Product mode" meant up to five independent redraws until this was rewritten. See *Retry policy: five draws to one repair* at the bottom for why that was the wrong mechanism, and what replaced it.)
 
-## Model choice (Groq)
+## Provider history: why Groq, and why it was removed
+
+Generation originally targeted the Groq free tier. Groq has since been **removed entirely** —
+`google` is now the only provider — but the model-selection work is kept here, because the
+conclusion it reached is the one that still governs the system.
 
 | Model | Single-shot | Product mode | Notes |
 |---|---|---|---|
-| `openai/gpt-oss-20b` **(Groq default)** | 5-6 / 8 | **8 / 8** | The small free model. |
+| `openai/gpt-oss-20b` | 5-6 / 8 | **8 / 8** | The small free model, and the one used during development. |
 | `openai/gpt-oss-120b` | 7-8 / 8 | 8 / 8 | Six times larger. Better on its own, no better in the product. |
 | `llama-3.3-70b-versatile` | n/a | n/a | No `json_schema` support: returns a 400. |
 | `llama-3.1-8b-instant` | n/a | n/a | No `json_schema` support: returns a 400. |
 
-The small model is the default on Groq.
-It is measurably worse at one-shot compliance, and it reaches the same place in the product, because the validator gates every attempt identically and a retry only costs time on a brief that was going to be thrown away anyway.
-Reaching for the bigger model would have bought a better single-shot number and no better outcome for the rep.
+The small model was kept as the default despite being measurably worse at one-shot compliance,
+because it reached the same place in the product: the validator gates every attempt identically, so a
+retry only costs time on a brief that was going to be thrown away anyway. Reaching for the bigger
+model would have bought a better single-shot number and no better outcome for the rep.
 
-Structured output support is the real constraint, not size. It is what lets Zod reject a malformed brief before the factual validator runs, and the two obvious Llama choices do not have it.
+**Structured output support is the real constraint, not size.** It is what lets Zod reject a
+malformed brief before the factual validator runs, and the two obvious Llama choices do not have it.
+That finding is what disqualified half the candidate models, and it is why the provider seam was
+worth building: swapping Groq for Gemini was a one-file change.
 
 ## 2026-07-10 - Phase 0
 
 - Repo scaffolded; runtime prompts are authored under `prompts/`.
 - Decision recorded: numbers are always extractive from the knowledge base; the LLM writes prose only. This constraint is encoded in every prompt and enforced by the grounding validator.
-- Provider decision: generation targets the Groq free tier, swapped from Gemini before any prompt was written. The LLM stays isolated in one module, so changing provider is a one-file change.
+- Provider decision: generation targeted the Groq free tier, swapped from Gemini before any prompt was written. The LLM stays isolated in one module, so changing provider is a one-file change. That decision paid for itself later: the project swapped **back** to Gemini and deleted Groq, and nothing outside that one module moved.
 
 ## v1 - initial draft
 
@@ -138,7 +152,7 @@ The exact-substring CRM check and the qualifier check compared raw code points, 
 Both now normalize typography before comparing.
 Wording is still never normalized, so a paraphrase still fails.
 
-## v3 - current
+## v3
 
 Changes from v2:
 
@@ -148,7 +162,7 @@ Changes from v2:
 4. A statistic without its denominator is an overclaim, with the `xr-study-fusion-uplift-01` failure as its example.
 5. Comparative language forbidden outright.
 6. A four-point self-check before answering.
-7. `abstention_reason` documented as `""` when grounded, because Groq's strict schema mode has no optional fields.
+7. `abstention_reason` documented as `""` when grounded, because strict structured-output mode has no optional fields. (Found on Groq; equally true of Gemini, which is why the rule survived the provider swap unchanged.)
 
 **Result: 7-8 / 8 single-shot, 8 / 8 with the product's retry, 6 / 6 deterministic.**
 
@@ -181,14 +195,16 @@ which would mean shipping the overclaims instead of catching them. The product r
 once, which clears them, and a brief that fails twice is shown to the rep as blocked rather
 than guessed at.
 
-## Infrastructure notes from the same iteration
+## Infrastructure notes from the same iteration (Groq era)
 
-- `llama-3.3-70b-versatile` does not support `response_format: json_schema` on Groq and returns a 400. Switched to `openai/gpt-oss-120b`, which does. Strict structured output is load-bearing: it is what lets Zod reject a malformed brief before the factual validator ever runs.
+Kept because the first item is the finding that still governs model selection today.
+
+- `llama-3.3-70b-versatile` does not support `response_format: json_schema` on Groq and returns a 400. Switched to `openai/gpt-oss-120b`, which does. **Strict structured output is load-bearing:** it is what lets Zod reject a malformed brief before the factual validator ever runs, and it disqualified both obvious Llama choices outright.
 - `gpt-oss-120b` is a reasoning model, and its reasoning tokens are billed against the completion budget. A budget sized for the visible JSON alone gets spent on reasoning and returns an empty string, which the provider then rejects as invalid JSON. Raised to `max_completion_tokens: 8000` with `reasoning_effort: medium`. Reasoning content is never requested, read, stored, or displayed.
-- Groq occasionally fails its own schema check during generation (`json_validate_failed`). That is a transient generation fault rather than a bad request, so it is retried up to three times. A brief that the *validator* rejects is never retried: it is surfaced as blocked.
+- Groq occasionally failed its own schema check during generation (`json_validate_failed`). That is a transient generation fault rather than a bad request, so it was retried up to three times. A brief that the *validator* rejects is never retried: it is surfaced as blocked.
 
 
-## v4 - current
+## v4 - current runtime prompt
 
 Not a grounding change. A product change, and the prompt had to follow it.
 
