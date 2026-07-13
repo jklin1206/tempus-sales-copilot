@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tempus Sales Copilot - Solution &amp; Approach</title>
+
+<!-- Typography: Archivo (display, 900 uppercase) + IBM Plex Mono (data, labels).
+     Never system fonts. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================================================
+   THEME - "SWISS RIGOR"
+   Palette is lifted from the product itself (src/app/globals.css): warm paper,
+   a single terracotta accent, stone ink. The deck and the app are one artifact.
+   Change these variables to change the entire deck.
+   =========================================================================== */
+:root {
+    --bg:       #faf9f7;   /* warm off-white, matches the app's paper */
+    --ink:      #0d0d0c;   /* near-black, for display type and rules */
+    --ink-2:    #6b6660;   /* muted stone, for secondary prose */
+    --ink-3:    #a8a29e;   /* faintest, for de-emphasised data */
+    --accent:   #b6533f;   /* the product's terracotta. Used SPARINGLY, as a verdict. */
+    --accent-soft: #f3e5e0;
+    --line:     rgba(13,13,12,.14);
+    --line-2:   rgba(13,13,12,.07);
+
+    --font-display: 'Archivo', sans-serif;
+    --font-mono:    'IBM Plex Mono', monospace;
+
+    --ease: cubic-bezier(.22,1,.36,1);
+    --dur:  .75s;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+/* ===========================================================================
+   VIEWPORT FITTING: MANDATORY BASE STYLES (from viewport-base.css)
+   Every slide fits exactly in 100vh. No scrolling inside a slide, ever.
+   =========================================================================== */
+html, body { height:100%; overflow-x:hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+
+.slide {
+    width:100vw; height:100vh; height:100dvh;
+    overflow:hidden;                 /* CRITICAL */
+    scroll-snap-align:start;
+    display:flex; flex-direction:column;
+    position:relative;
+}
+.slide-content { flex:1; display:flex; flex-direction:column; justify-content:center;
+    max-height:100%; overflow:hidden; padding: var(--slide-padding); }
+
+:root {
+    --title-size:    clamp(1.5rem, 5vw, 4rem);
+    --h2-size:       clamp(1.25rem, 3.5vw, 2.5rem);
+    --h3-size:       clamp(1rem, 2.5vw, 1.75rem);
+    --body-size:     clamp(0.75rem, 1.5vw, 1.125rem);
+    --small-size:    clamp(0.65rem, 1vw, 0.875rem);
+    --slide-padding: clamp(1rem, 4vw, 4rem);
+    --content-gap:   clamp(0.5rem, 2vw, 2rem);
+    --element-gap:   clamp(0.25rem, 1vw, 1rem);
+}
+.card, .container, .content-box { max-width:min(90vw,1000px); max-height:min(80vh,700px); }
+.feature-list, .bullet-list { gap: clamp(0.4rem,1vh,1rem); }
+.feature-list li, .bullet-list li { font-size: var(--body-size); line-height:1.4; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));
+    gap: clamp(0.5rem,1.5vw,1rem); }
+img, .image-container { max-width:100%; max-height:min(50vh,400px); object-fit:contain; }
+
+@media (max-height:700px) {
+    :root { --slide-padding:clamp(.75rem,3vw,2rem); --content-gap:clamp(.4rem,1.5vw,1rem);
+        --title-size:clamp(1.25rem,4.5vw,2.5rem); --h2-size:clamp(1rem,3vw,1.75rem); }
+}
+@media (max-height:600px) {
+    :root { --slide-padding:clamp(.5rem,2.5vw,1.5rem); --content-gap:clamp(.3rem,1vw,.75rem);
+        --title-size:clamp(1.1rem,4vw,2rem); --body-size:clamp(.7rem,1.2vw,.95rem); }
+    .nav-dots, .keyboard-hint, .decorative { display:none; }
+}
+@media (max-height:500px) {
+    :root { --slide-padding:clamp(.4rem,2vw,1rem); --title-size:clamp(1rem,3.5vw,1.5rem);
+        --h2-size:clamp(.9rem,2.5vw,1.25rem); --body-size:clamp(.65rem,1vw,.85rem); }
+}
+@media (max-width:600px) {
+    :root { --title-size:clamp(1.25rem,7vw,2.5rem); }
+    .grid { grid-template-columns:1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.2s !important; }
+    html { scroll-behavior:auto; }
+}
+
+/* ===========================================================================
+   SLIDE CHROME
+   Every slide is a ruled page: hard rule top, hard rule bottom, exposed grid.
+   The structure being visible IS the argument - this product is about structure.
+   =========================================================================== */
+body { background: var(--bg); color: var(--ink); font-family: var(--font-display); }
+
+/* The 12-column grid, faintly drawn. Decorative but load-bearing to the concept. */
+.slide::before {
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+    background-image: repeating-linear-gradient(90deg, var(--line-2) 0 1px, transparent 1px calc(100%/12));
+}
+
+.slide-head, .slide-foot {
+    position:relative; z-index:2;
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding: clamp(.9rem,2.4vw,1.6rem) var(--slide-padding);
+    font-family: var(--font-mono);
+    font-size: clamp(.54rem, 1.05vh, .7rem);
+    letter-spacing:.16em; text-transform:uppercase;
+}
+.slide-head { border-bottom:2px solid var(--ink); }
+.slide-foot { border-top:1px solid var(--line); color:var(--ink-3); font-size:clamp(.5rem,.95vh,.63rem); }
+.slide-head .brand { font-weight:600; color:var(--ink); }
+.slide-head .num   { color:var(--ink-3); font-weight:500; }
+.slide-head .num b { color:var(--accent); font-weight:600; }
+
+/* ===========================================================================
+   TYPE SCALE
+   =========================================================================== */
+.kicker {
+    font-family:var(--font-mono); font-weight:600;
+    font-size: clamp(.58rem, 1.15vh, .76rem);
+    letter-spacing:.2em; text-transform:uppercase; color:var(--accent);
+    margin-bottom: clamp(.7rem, 1.8vh, 1.3rem);
+}
+h1 {
+    font-weight:900; text-transform:uppercase;
+    font-size: clamp(1.7rem, 6.6vh, 4.6rem);
+    line-height:.95; letter-spacing:-.03em; max-width:19ch;
+}
+h1.hero { font-size: clamp(2rem, 8.2vh, 6rem); max-width:16ch; }
+h2 {
+    font-weight:900; text-transform:uppercase;
+    font-size: clamp(1.25rem, 4.4vh, 2.9rem);
+    line-height:1.0; letter-spacing:-.025em; max-width:22ch;
+}
+.lede {
+    font-family:var(--font-mono); font-weight:400;
+    font-size: clamp(.74rem, 1.65vh, 1rem); line-height:1.65; color:var(--ink-2);
+    max-width: 58ch; margin-top: clamp(.9rem, 2.2vh, 1.5rem);
+    border-left:2px solid var(--accent); padding-left: clamp(.7rem,1.3vw,1.1rem);
+}
+.lede strong { color:var(--ink); font-weight:600; }
+
+/* ===========================================================================
+   LAYOUT PRIMITIVES
+   =========================================================================== */
+.two-col {
+    display:grid; grid-template-columns: 1fr 1fr;
+    gap: clamp(1.2rem, 3.4vw, 3.4rem); align-items:center; min-height:0;
+}
+.two-col.wide-right { grid-template-columns: 0.86fr 1.14fr; }
+.two-col.wide-left  { grid-template-columns: 1.18fr 0.82fr; }
+@media (max-width:860px){ .two-col, .two-col.wide-right, .two-col.wide-left { grid-template-columns:1fr; } }
+
+/* Screenshots: a hairline frame, no gratuitous shadow. */
+.shot {
+    width:100%; height:auto; display:block;
+    max-height: min(72vh, 780px); object-fit:contain; object-position:top;
+    border:1px solid var(--line); border-radius:4px;
+    background:var(--bg);
+}
+.shot-wrap { position:relative; min-height:0; }
+.shot-cap {
+    font-family:var(--font-mono); font-size:clamp(.5rem,.95vh,.63rem);
+    letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3);
+    margin-top:.6rem;
+}
+
+/* Numbered claim list - the workhorse for approach slides. */
+.claims { list-style:none; display:flex; flex-direction:column; gap: clamp(.55rem,1.5vh,1.05rem); margin-top: clamp(.8rem,2vh,1.4rem); }
+.claims li { display:grid; grid-template-columns: auto 1fr; gap: clamp(.6rem,1.4vw,1rem); align-items:start; }
+.claims .i {
+    font-family:var(--font-mono); font-weight:600; color:var(--accent);
+    font-size:clamp(.56rem,1.05vh,.7rem); letter-spacing:.1em;
+    padding-top:.25em; min-width:2.1em;
+}
+.claims .t { font-family:var(--font-display); font-weight:500;
+    font-size:clamp(.78rem,1.75vh,1.05rem); line-height:1.4; color:var(--ink); }
+.claims .t span { color:var(--ink-2); font-weight:400; display:block; margin-top:.18em;
+    font-family:var(--font-mono); font-size:clamp(.66rem,1.4vh,.84rem); line-height:1.55; }
+
+/* ===========================================================================
+   RUBRIC BLOCKS
+   The evaluation criteria ask explicitly for problem definition, assumptions,
+   and process. These are the elements that carry those answers.
+   =========================================================================== */
+
+/* The "what aspect am I solving" callout. The one filled block in the deck, so
+   the eye lands on the scoping decision rather than the problem restatement. */
+.focus {
+    display:flex; flex-direction:column; gap:.5em;
+    margin-top: clamp(1rem,2.8vh,1.9rem);
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: clamp(.9rem,2.2vh,1.35rem) clamp(1rem,1.8vw,1.5rem);
+}
+.focus .fl {
+    font-family:var(--font-mono); font-weight:600;
+    font-size: clamp(.56rem,1.1vh,.72rem); letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent);
+}
+.focus .ft {
+    font-family:var(--font-mono); font-size: clamp(.68rem,1.45vh,.9rem);
+    line-height:1.6; color:var(--ink-2); max-width:88ch;
+}
+.focus .ft strong { color:var(--ink); font-weight:600; }
+
+/* Column heading, for the assumptions / not-built split. */
+.col-label {
+    font-family:var(--font-mono); font-weight:600;
+    font-size: clamp(.56rem,1.1vh,.72rem); letter-spacing:.18em; text-transform:uppercase;
+    color:var(--ink); padding-bottom:.55em; margin-bottom: clamp(.6rem,1.5vh,1rem);
+    border-bottom:2px solid var(--ink);
+}
+.col-label.cut { color:var(--accent); border-bottom-color:var(--accent); }
+
+/* Denser claim list, for slides carrying two columns of them. */
+.claims.tight { gap: clamp(.45rem,1.15vh,.8rem); margin-top:0; }
+.claims.tight .t { font-size: clamp(.72rem,1.5vh,.95rem); }
+.claims.tight .t span { font-size: clamp(.6rem,1.25vh,.78rem); line-height:1.5; }
+.claims.tight .t span strong { color:var(--ink); font-weight:600; }
+
+/* The "why now" cut, argued. */
+.cut-note {
+    font-family:var(--font-mono); font-size: clamp(.62rem,1.3vh,.8rem);
+    line-height:1.65; color:var(--ink-2);
+    margin-top: clamp(.7rem,1.8vh,1.2rem);
+    border-left:2px solid var(--line); padding-left: clamp(.7rem,1.3vw,1.1rem);
+}
+.cut-note strong { color:var(--accent); font-weight:600; }
+.cut-note .cut-tail { display:block; margin-top:.7em; color:var(--ink-3); }
+
+/* Tools strip: free tooling only, per the brief. */
+.tools {
+    margin-top: clamp(.9rem,2.4vh,1.6rem);
+    border-top:1px solid var(--line); padding-top: clamp(.6rem,1.5vh,1rem);
+    display:flex; flex-direction:column; gap:.45em;
+}
+.tools .tl {
+    font-family:var(--font-mono); font-weight:600;
+    font-size: clamp(.54rem,1.05vh,.68rem); letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent);
+}
+/* Two numbers, each labelled with the question it answers, so the distinction
+   explains itself rather than needing a footnote. */
+.score { margin-top: clamp(.9rem,2.2vh,1.5rem); border-top:2px solid var(--ink); padding-top:.65rem; }
+.score .row {
+    display:flex; justify-content:space-between; align-items:baseline; gap:1rem;
+    padding: clamp(.34rem,.9vh,.6rem) 0; border-bottom:1px solid var(--line);
+}
+.score .k { font-family:var(--font-mono); font-size: clamp(.64rem,1.35vh,.84rem); color:var(--ink-2); }
+.score .v { font-family:var(--font-mono); font-weight:600;
+    font-size: clamp(.78rem,1.65vh,1.02rem); color:var(--ink); white-space:nowrap; }
+.score .v.hit { color:var(--accent); }
+.score .sn { font-family:var(--font-mono); font-size: clamp(.56rem,1.2vh,.74rem);
+    line-height:1.6; color:var(--ink-3); margin-top:.65rem; }
+
+/* The moment the harness was wrong and the model was right. */
+.quote {
+    border:1px solid var(--line); border-left:4px solid var(--accent);
+    padding: clamp(.85rem,2.1vh,1.3rem) clamp(.9rem,1.6vw,1.35rem);
+    display:flex; flex-direction:column; gap:.35em;
+}
+.quote .ql { font-family:var(--font-mono); font-weight:600;
+    font-size: clamp(.52rem,1.05vh,.66rem); letter-spacing:.16em;
+    text-transform:uppercase; color:var(--accent); }
+.quote .ql:not(:first-child) { margin-top:.6em; }
+.quote .qt { font-family:var(--font-mono); font-size: clamp(.66rem,1.4vh,.88rem);
+    line-height:1.6; color:var(--ink-2); }
+.quote .qt strong { color:var(--ink); font-weight:600; }
+.note.dim { color:var(--ink-3); }
+
+/* The architecture tradeoff, argued in three columns under the pipeline.
+   Reviewers will ask why there is no RAG and no agent loop. This answers it,
+   and names the condition under which the answer would change. */
+.tradeoff {
+    margin-top: clamp(1rem,2.6vh,1.8rem);
+    border-top:1px solid var(--line); padding-top: clamp(.7rem,1.7vh,1.1rem);
+    display:flex; flex-direction:column; gap: clamp(.5rem,1.3vh,.9rem);
+}
+.tradeoff .tl {
+    font-family:var(--font-mono); font-weight:600;
+    font-size: clamp(.56rem,1.1vh,.72rem); letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent);
+}
+.tradeoff .tg { display:grid; grid-template-columns:repeat(3,1fr); gap: clamp(.9rem,2.2vw,2rem); }
+.tradeoff .tg div {
+    font-family:var(--font-mono); font-size: clamp(.6rem,1.25vh,.78rem);
+    line-height:1.6; color:var(--ink-2);
+    border-left:2px solid var(--line); padding-left: clamp(.6rem,1.1vw,.95rem);
+}
+.tradeoff .tg b { color:var(--ink); font-weight:600; }
+
+/* Tool names as ruled tags. No descriptors: the names are the answer. */
+.tools .tags { display:flex; flex-wrap:wrap; gap: clamp(.35rem,.8vw,.55rem); margin-top:.25em; }
+.tools .tags span {
+    font-family:var(--font-mono); font-weight:500;
+    font-size: clamp(.62rem,1.3vh,.82rem);
+    color:var(--ink); border:1px solid var(--ink);
+    padding:.42em .75em; white-space:nowrap;
+}
+
+/* Compact claim row: three short statements, no sub-text. Used on the brief slide,
+   where the screenshot needs the room. */
+.claims.inline { flex-direction:row; flex-wrap:wrap; gap: clamp(.9rem,2.6vw,2.6rem); }
+.claims.inline li { align-items:center; }
+.claims.inline .t { font-size: clamp(.72rem,1.5vh,.98rem); font-weight:500; }
+
+/* Landscape screenshot beneath the heading.
+   width:auto is deliberate: with width:100% the image letterboxes inside its own
+   border, leaving an empty frame either side of it. Let the border hug the pixels. */
+.shot-wrap.wide { width:100%; margin-top: clamp(.9rem,2.4vh,1.8rem); }
+.shot.wide { max-height: min(46vh, 430px); width:auto; max-width:100%;
+             object-position:center; }
+
+/* Pipeline: the workflow, drawn as ruled cells. */
+.pipe { display:grid; grid-template-columns: repeat(5, 1fr); border:1px solid var(--ink);
+    margin-top: clamp(1.2rem,3.2vh,2.2rem); }
+.pipe .step { padding: clamp(1rem,2.6vh,1.7rem) clamp(.7rem,1.2vw,1.15rem);
+    border-right:1px solid var(--line); display:flex; flex-direction:column; gap:.55em;
+    min-height:clamp(125px,21vh,200px); }
+.pipe .step:last-child { border-right:0; }
+.pipe .step.verdict { background:var(--ink); color:var(--bg); }
+.pipe .step.verdict .sn { color:var(--bg); opacity:.55; }
+.pipe .step.verdict .sl { color:var(--bg); }
+.pipe .sn { font-family:var(--font-mono); font-size:clamp(.56rem,1.1vh,.72rem);
+    letter-spacing:.16em; color:var(--accent); font-weight:600; }
+.pipe .sl { font-family:var(--font-display); font-weight:700; text-transform:uppercase;
+    font-size:clamp(.74rem,1.65vh,1.05rem); line-height:1.15; letter-spacing:-.012em; }
+.pipe .sd { font-family:var(--font-mono); font-size:clamp(.62rem,1.3vh,.84rem);
+    color:var(--ink-2); line-height:1.55; }
+.pipe .step.verdict .sd { color:rgba(250,249,247,.66); }
+@media (max-width:860px){ .pipe { grid-template-columns:1fr; }
+    .pipe .step { border-right:0; border-bottom:1px solid var(--line); } }
+
+/* Ruled data table - used ONLY where numbers earn their place (validation). */
+.tbl { width:100%; border-collapse:collapse; margin-top: clamp(.8rem,2vh,1.4rem);
+    font-family:var(--font-mono); font-size:clamp(.6rem,1.3vh,.82rem); }
+.tbl th, .tbl td { text-align:left; padding: clamp(.42rem,1.1vh,.72rem) .6rem;
+    border-bottom:1px solid var(--line); }
+.tbl thead th { border-bottom:2px solid var(--ink); font-weight:600;
+    font-size:clamp(.5rem,.95vh,.63rem); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2); }
+.tbl td.v { font-weight:600; color:var(--ink); white-space:nowrap; }
+.tbl td.v.hit { color:var(--accent); }
+.tbl tr:last-child td { border-bottom:0; }
+
+/* Code / prompt excerpt block */
+.code {
+    font-family:var(--font-mono); font-size:clamp(.55rem,1.18vh,.75rem); line-height:1.6;
+    background:var(--ink); color:#e8e5e1; border-radius:4px;
+    padding: clamp(.75rem,1.9vh,1.25rem) clamp(.8rem,1.6vw,1.2rem);
+    margin-top: clamp(.7rem,1.8vh,1.2rem);
+    white-space:pre-wrap; overflow:hidden; max-height:36vh;
+}
+.code .c  { color:#8a857f; }              /* comment */
+.code .k  { color:#e0846c; font-weight:600; } /* the accent, as syntax */
+.code .s  { color:#cfe0c8; }
+
+/* Small print note */
+.note { font-family:var(--font-mono); font-size:clamp(.55rem,1.1vh,.7rem); line-height:1.6;
+    color:var(--ink-2); margin-top: clamp(.7rem,1.8vh,1.2rem); max-width:62ch; }
+.note b { color:var(--accent); font-weight:600; }
+
+/* Title-slide only: the source blocks that don't compose */
+/* The three sources. Deliberately large: they carry the whole problem statement,
+   so they run the full content width rather than hiding in a corner. */
+.sources { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(.7rem,1.6vw,1.3rem);
+    margin-top:clamp(1.1rem,3vh,2rem); width:100%; }
+.src { border:1px solid var(--line); border-top:4px solid var(--ink);
+    padding:clamp(1rem,2.6vh,1.7rem) clamp(.9rem,1.5vw,1.4rem);
+    min-height:clamp(110px,19vh,180px);
+    display:flex; flex-direction:column; gap:.55em; }
+.src .h { font-family:var(--font-display); font-weight:700; text-transform:uppercase;
+    font-size:clamp(.76rem,1.7vh,1.08rem); letter-spacing:-.012em; line-height:1.15; }
+.src .p { font-family:var(--font-mono); font-size:clamp(.64rem,1.35vh,.86rem);
+    color:var(--ink-2); line-height:1.55; }
+
+/* ===========================================================================
+   REVEAL ANIMATION - staggered on slide entry
+   =========================================================================== */
+.reveal { opacity:0; transform:translateY(22px);
+    transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.slide.visible .reveal { opacity:1; transform:none; }
+.slide.visible .reveal:nth-child(1){transition-delay:.05s}
+.slide.visible .reveal:nth-child(2){transition-delay:.15s}
+.slide.visible .reveal:nth-child(3){transition-delay:.25s}
+.slide.visible .reveal:nth-child(4){transition-delay:.35s}
+.slide.visible .reveal:nth-child(5){transition-delay:.45s}
+
+/* The strike-through on the title: the gap, drawn. */
+.gapword { position:relative; display:inline-block; color:var(--ink-3); }
+.gapword::after { content:""; position:absolute; left:-1%; right:-1%; top:53%; height:.075em;
+    background:var(--accent); transform:scaleX(0); transform-origin:left; }
+.slide.visible .gapword::after { transform:scaleX(1); transition: transform .7s var(--ease) 1s; }
+
+/* ===========================================================================
+   NAV: progress bar, dots, hint
+   =========================================================================== */
+.progress-bar { position:fixed; top:0; left:0; height:2px; width:0;
+    background:var(--accent); z-index:9999; transition:width .25s ease; }
+.nav-dots { position:fixed; right:clamp(.7rem,1.6vw,1.3rem); top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; gap:.55rem; z-index:9998; }
+.nav-dots button { width:7px; height:7px; border-radius:50%; border:1px solid var(--ink-3);
+    background:transparent; padding:0; cursor:pointer; transition:all .25s ease; }
+.nav-dots button.active { background:var(--accent); border-color:var(--accent); transform:scale(1.35); }
+/* Sits ABOVE the footer rule, centred, so it never collides with footer text. */
+.keyboard-hint { position:fixed; bottom:clamp(3.4rem,7vh,4.6rem); left:50%; transform:translateX(-50%);
+    font-family:var(--font-mono); font-size:.56rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-3); z-index:9998; opacity:.55; pointer-events:none; }
+
+/* ===========================================================================
+   PRINT / PDF EXPORT
+   One slide per landscape page, all navigation chrome removed.
+   =========================================================================== */
+@media print {
+    @page { size: 1440px 900px; margin: 0; }
+    html { scroll-snap-type:none; }
+    html, body { height:auto; overflow:visible; background:var(--bg); }
+    .progress-bar, .nav-dots, .keyboard-hint,
+    .edit-hotzone, .edit-toggle, .edit-bar { display:none !important; }
+
+    /* A slide is exactly one page. break-inside:avoid is load-bearing: without it,
+       a slide one pixel too tall gets SPLIT across pages, which shunts its grid
+       children out of position and lands images on top of the text. */
+    .slide {
+        height:900px !important; width:1440px !important;
+        overflow:hidden !important;
+        page-break-after:always; break-after:page;
+        break-inside:avoid; page-break-inside:avoid;
+    }
+    .slide:last-child { page-break-after:auto; break-after:auto; }
+    .slide-content { padding:34px 56px !important; }
+
+    /* Pin every multi-column layout. Chrome lays print out at a narrow width, so the
+       mobile breakpoints match and collapse the grids unless we override them here. */
+    .two-col             { grid-template-columns:1fr 1fr !important; }
+    .two-col.wide-right  { grid-template-columns:.86fr 1.14fr !important; }
+    .two-col.wide-left   { grid-template-columns:1.18fr .82fr !important; }
+    .pipe                { grid-template-columns:repeat(5,1fr) !important; }
+    .pipe .step          { border-right:1px solid var(--line) !important; border-bottom:0 !important;
+                           min-height:190px !important; padding:22px 18px !important; }
+    .pipe .step:last-child { border-right:0 !important; }
+    .pipe .sl            { font-size:1.02rem !important; }
+    .pipe .sd            { font-size:.8rem !important; }
+    .pipe .sn            { font-size:.7rem !important; }
+
+    /* Same story for the three source cards: vh-based clamps shrink them in print. */
+    .src   { min-height:150px !important; padding:22px 20px !important; }
+    .src .h { font-size:1.02rem !important; }
+    .src .p { font-size:.82rem !important; }
+
+    /* The rubric blocks, pinned to real pixels for the same reason. */
+    .focus       { padding:20px 24px !important; }
+    .focus .fl   { font-size:.72rem !important; }
+    .focus .ft   { font-size:.88rem !important; }
+    .col-label   { font-size:.72rem !important; }
+    .cut-note    { font-size:.8rem !important; }
+    .tools .tl        { font-size:.68rem !important; }
+    .tools .tags span { font-size:.82rem !important; }
+    .tradeoff .tl     { font-size:.7rem !important; }
+    .tradeoff .tg     { grid-template-columns:repeat(3,1fr) !important; }
+    .tradeoff .tg div { font-size:.78rem !important; }
+    .score .k         { font-size:.84rem !important; }
+    .score .v         { font-size:1rem !important; }
+    .score .sn        { font-size:.74rem !important; }
+    .quote .ql        { font-size:.66rem !important; }
+    .quote .qt        { font-size:.87rem !important; }
+    .claims.tight .t      { font-size:.95rem !important; }
+    .claims.tight .t span { font-size:.78rem !important; }
+
+    /* Hard pixel ceiling on screenshots. vh is unreliable inside a print page box,
+       and an unconstrained image is what overflowed the page in the first place. */
+    .shot-wrap { overflow:hidden; min-height:0; }
+    .shot { max-height:600px !important; width:100% !important; height:auto !important;
+            object-fit:contain; object-position:top; }
+    .shot.wide { max-height:400px !important; width:auto !important; max-width:100% !important;
+                 object-position:center; }
+    .code { max-height:none !important; }
+
+    /* Reveals must be OFF in print, or every slide exports blank. */
+    .reveal { opacity:1 !important; transform:none !important; transition:none !important; }
+    .gapword::after { transform:scaleX(1) !important; transition:none !important; }
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+}
+
+/* ===========================================================================
+   INLINE EDITING (opted in)
+   JS-driven visibility - never the CSS `~` sibling trick, which breaks the
+   hover chain via pointer-events:none.
+   =========================================================================== */
+.edit-hotzone { position:fixed; top:0; left:0; width:80px; height:80px; z-index:10000; cursor:pointer; }
+.edit-toggle {
+    position:fixed; top:14px; left:14px; z-index:10001;
+    width:38px; height:38px; border-radius:50%; border:1px solid var(--line);
+    background:var(--bg); color:var(--ink); font-size:15px; line-height:1;
+    display:grid; place-items:center; cursor:pointer;
+    opacity:0; pointer-events:none; transition:opacity .3s ease;
+}
+.edit-toggle.show, .edit-toggle.active { opacity:1; pointer-events:auto; }
+.edit-toggle.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+body.editing [contenteditable="true"] { outline:1px dashed var(--accent); outline-offset:3px; border-radius:2px; }
+body.editing [contenteditable="true"]:focus { outline:2px solid var(--accent); background:var(--accent-soft); }
+.edit-bar {
+    position:fixed; bottom:0; left:0; right:0; z-index:10001;
+    background:var(--ink); color:var(--bg); display:none;
+    font-family:var(--font-mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
+    padding:.7rem 1.1rem; justify-content:space-between; align-items:center;
+}
+body.editing .edit-bar { display:flex; }
+.edit-bar button { font-family:var(--font-mono); font-size:.66rem; letter-spacing:.1em;
+    text-transform:uppercase; background:var(--accent); color:#fff; border:0;
+    padding:.5em 1em; border-radius:3px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+<div class="keyboard-hint">← → navigate</div>
+
+<!-- Inline editing controls -->
+<div class="edit-hotzone" title="Edit mode"></div>
+<button class="edit-toggle" id="editToggle" title="Edit mode (E)">✎</button>
+<div class="edit-bar">
+    <span>Edit mode · click any text · <b>Ctrl/Cmd+S</b> saves</span>
+    <button id="exportBtn">Export HTML</button>
+</div>
+
+
+<!-- ======================================================================
+     SLIDE 1 - PROBLEM DEFINITION
+     Rubric: "What aspect of the problem are you solving and why?"
+     The title lives in the kicker so no slide is spent on a cover.
+     ====================================================================== -->
+<section class="slide" id="s1">
+    <div class="slide-head">
+        <span class="brand">Tempus &middot; Sales Copilot</span>
+        <span class="num"><b>01</b> / 08</span>
+    </div>
+    <div class="slide-content">
+        <div class="reveal kicker">Solution &amp; approach &middot; Problem definition</div>
+        <h1 class="reveal">Hours of digging<br>for a 15&#8209;minute meeting.</h1>
+        <p class="lede reveal">The data already exists. It lives in three places, and the rep does the synthesis by hand, the night before.</p>
+
+        <div class="sources reveal">
+            <div class="src">
+                <div class="h">Market intelligence</div>
+                <div class="p">Who to call. Not what to say.</div>
+            </div>
+            <div class="src">
+                <div class="h">Product knowledge</div>
+                <div class="p">What Tempus can claim. Not to whom.</div>
+            </div>
+            <div class="src">
+                <div class="h">CRM notes</div>
+                <div class="p">The concern raised last time. Not the answer to it.</div>
+            </div>
+        </div>
+
+        <div class="focus reveal">
+            <span class="fl">The aspect I am solving</span>
+            <span class="ft">The <strong>synthesis</strong>, not the plumbing. Collection and CRM already work. What does not exist is the last mile: turning three static sources into one thing a rep can say out loud, <strong>and defend when the doctor pushes back</strong>.</span>
+        </div>
+    </div>
+</section>
+
+
+<!-- ======================================================================
+     SLIDE 2 - ASSUMPTIONS + DELIBERATE OMISSIONS
+     Rubric: "Assumptions you're making in your solution."
+     The "why now" cut is the strongest product-thinking moment in the project.
+     ====================================================================== -->
+<section class="slide" id="s2">
+    <div class="slide-head">
+        <span class="brand">Scope &amp; assumptions</span>
+        <span class="num"><b>02</b> / 08</span>
+    </div>
+    <div class="slide-content">
+        <div class="reveal kicker">What I built, and what I did not</div>
+        <h2 class="reveal">The honest version of the scope.</h2>
+
+        <div class="two-col reveal" style="margin-top:clamp(.9rem,2.4vh,1.6rem); align-items:start;">
+            <div>
+                <div class="col-label">Assumptions</div>
+                <ul class="claims tight">
+                    <li><span class="i">01</span><span class="t">"Provider" means the oncologist<span>The case study's word, and standard healthcare usage. The meeting is with a doctor or a CMO.</span></span></li>
+                    <li><span class="i">02</span><span class="t">Population is a directional proxy<span>"Ordered by impact" is asked for, but impact is not in the data. I sort by the one real signal and label it, rather than invent a composite score that looks clever and means nothing.</span></span></li>
+                    <li><span class="i">03</span><span class="t">The prototype begins after ingestion<span>Committed snapshots. No Salesforce sync, no live scraping, no database.</span></span></li>
+                    <li><span class="i">04</span><span class="t">Product facts are public&#8209;page only<span>So no pricing or coverage fact exists, and a cost question routes to a human. An eval check asserts that gap stays a gap.</span></span></li>
+                </ul>
+            </div>
+            <div>
+                <div class="col-label cut">Deliberately not built</div>
+                <ul class="claims tight">
+                    <li><span class="i">&#10007;</span><span class="t">A chat interface<span>The rep has fifteen minutes and already knows what they need. Making them prompt their way to it hands the work back to them and returns something different every time. <strong>One click, one brief, read in thirty seconds.</strong></span></span></li>
+                    <li><span class="i">&#10007;</span><span class="t">"Why now"<span>The three supplied sources are timeless. A defensible answer needs a dated catalyst feed. I built one and cut it rather than manufacture urgency.</span></span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ======================================================================
+     SLIDE 3 - THE SOLUTION (output 1: the ranked list)
+     ====================================================================== -->
+<section class="slide" id="s3">
+    <div class="slide-head">
+        <span class="brand">The solution</span>
+        <span class="num"><b>03</b> / 08</span>
+    </div>
+    <div class="slide-content">
+        <div class="two-col wide-right">
+            <div>
+                <div class="reveal kicker">The solution</div>
+                <h2 class="reveal">One place.<br>Everything the rep needs.</h2>
+                <p class="lede reveal">Open a doctor and the brief is generated on the spot. <strong>Seconds, not an evening.</strong></p>
+            </div>
+            <div class="shot-wrap reveal">
+                <img class="shot" src="assets/01-territory-crop.png" alt="Territory list of eight oncologists ranked by opportunity">
+                <div class="shot-cap">Ranked by likely patient population</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ======================================================================
+     SLIDE 4 - THE BRIEF (outputs 2 and 3)
+     ====================================================================== -->
+<section class="slide" id="s4">
+    <div class="slide-head">
+        <span class="brand">The brief</span>
+        <span class="num"><b>04</b> / 08</span>
+    </div>
+    <div class="slide-content">
+        <div class="two-col wide-right">
+            <div>
+                <div class="reveal kicker">Per doctor</div>
+                <h2 class="reveal">The objection, answered. The pitch, timed.</h2>
+                <ul class="claims reveal">
+                    <li><span class="i">01</span><span class="t">Answers the CRM concern with a real metric</span></li>
+                    <li><span class="i">02</span><span class="t">65&#8211;80 words. Thirty seconds, enforced</span></li>
+                    <li><span class="i">03</span><span class="t">Every claim links to its source</span></li>
+                </ul>
+            </div>
+            <div class="shot-wrap reveal">
+                <img class="shot" src="assets/02-chen-objection.png" alt="Objection handler and 30-second meeting script generated for Dr. Sarah Chen">
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ======================================================================
+     SLIDE 5 - HOW IT WORKS
+     ====================================================================== -->
+<section class="slide" id="s5">
+    <div class="slide-head">
+        <span class="brand">How it works</span>
+        <span class="num"><b>05</b> / 08</span>
+    </div>
+    <div class="slide-content">
+        <div class="reveal kicker">Technical approach</div>
+        <h1 class="reveal">Three sources in.<br>One grounded brief out.</h1>
+
+        <div class="pipe reveal">
+            <div class="step">
+                <div class="sn">01</div>
+                <div class="sl">Load</div>
+                <div class="sd">This doctor's CRM note. The product fact vault.</div>
+            </div>
+            <div class="step">
+                <div class="sn">02</div>
+                <div class="sl">Build context</div>
+                <div class="sd">One bounded package. No other doctor's data can enter it.</div>
+            </div>
+            <div class="step">
+                <div class="sn">03</div>
+                <div class="sl">Generate</div>
+                <div class="sd">One structured call. The schema is enforced at the API.</div>
+            </div>
+            <div class="step">
+                <div class="sn">04</div>
+                <div class="sl">Validate</div>
+                <div class="sd">Every claim checked against the vault. Blocking.</div>
+            </div>
+            <div class="step verdict">
+                <div class="sn">05</div>
+                <div class="sl">Ship or block</div>
+                <div class="sd">One repair attempt. Then it ships, or the rep is told.</div>
+            </div>
+        </div>
+
+        <div class="tradeoff reveal">
+            <span class="tl">The tradeoff: no RAG, no agent loop</span>
+            <div class="tg">
+                <div><b>34 facts fit in one request.</b> At this size a retriever can only lose, by dropping the one fact that mattered. No embeddings, no vector store, and no retrieval failure mode to debug.</div>
+                <div><b>The model never picks a tool or decides to retry.</b> Code does. Every run is reproducible, and every failure is a test rather than a mystery.</div>
+                <div><b>The seam is already drawn.</b> Retrieval drops in behind the knowledge interface the day the corpus earns it. Nothing above it changes.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ======================================================================
+     SLIDE 6 - GROUNDING
+     ====================================================================== -->
+<section class="slide" id="s6">
+    <div class="slide-head">
+        <span class="brand">Trust</span>
+        <span class="num"><b>06</b> / 08</span>
+    </div>
+    <div class="slide-content">
+        <div class="two-col wide-left">
+            <div>
+                <div class="reveal kicker">Grounding</div>
+                <h2 class="reveal">Every claim is checked before the rep sees it.</h2>
+                <ul class="claims reveal">
+                    <li><span class="i">&#10003;</span><span class="t">The CRM quote is verbatim</span></li>
+                    <li><span class="i">&#10003;</span><span class="t">Every number traces to a cited fact</span></li>
+                    <li><span class="i">&#10003;</span><span class="t">Qualifiers survive<span>"Typically within 7 days" never becomes "within 7 days."</span></span></li>
+                    <li><span class="i">&#10003;</span><span class="t">No guarantee, competitor, or pricing claim</span></li>
+                </ul>
+                <p class="lede reveal">If a check fails, the brief is blocked. <strong>The rep is never handed a claim we cannot back.</strong></p>
+            </div>
+            <div class="shot-wrap reveal">
+                <img class="shot" src="assets/03-ruiz-crop.png" alt="Abstained brief: the copilot declines a pricing question and routes to a human">
+                <div class="shot-cap">No pricing fact exists, so it says so and routes to a human</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ======================================================================
+     SLIDE 7 - PROCESS, TOOLS & PROMPTS
+     Rubric: "The process you went through... the tools you used to develop it"
+             + required: "some of the prompts you used".
+     ====================================================================== -->
+<section class="slide" id="s7">
+    <div class="slide-head">
+        <span class="brand">Process &amp; tools</span>
+        <span class="num"><b>07</b> / 08</span>
+    </div>
+    <div class="slide-content">
+        <div class="two-col">
+            <div>
+                <div class="reveal kicker">How I arrived at it</div>
+                <h2 class="reveal">Spec first. Deterministic layers. Then the model.</h2>
+                <ul class="claims tight reveal">
+                    <li><span class="i">01</span><span class="t">Wrote the brief contract and the validation rules before any code</span></li>
+                    <li><span class="i">02</span><span class="t">Built everything that needs no model first<span>Loaders, the ranking, the validator. All testable without a single API call.</span></span></li>
+                    <li><span class="i">03</span><span class="t">Added the model last, constrained by the validator it would be graded on</span></li>
+                    <li><span class="i">04</span><span class="t">Iterated the prompt against an eval, not against taste<span>Four versions, each driven by a measured failure.</span></span></li>
+                </ul>
+                <div class="tools reveal">
+                    <span class="tl">Tools</span>
+                    <div class="tags">
+                        <span>Claude Code</span>
+                        <span>Codex</span>
+                        <span>Skills</span>
+                        <span>Gemini</span>
+                        <span>Next.js</span>
+                        <span>TypeScript</span>
+                        <span>Vercel</span>
+                        <span>GitHub</span>
+                    </div>
+                </div>
+            </div>
+            <div class="reveal">
+                <div class="col-label">The repair prompt</div>
+                <div class="code"><span class="c"># A rejected draft is not redrawn. It is shown</span>
+<span class="c"># exactly which checks it failed.</span>
+
+Your previous brief was <span class="k">REJECTED</span>.
+
+  <span class="k">&#10007; qualifiers_preserved</span>: xf-turnaround-01
+      You wrote "within 7 days".
+      The fact says <span class="s">"typically within 7 days"</span>.
+      The qualifier is not optional.
+
+  <span class="k">&#10007; numbers_trace_to_cited_facts</span>: 648
+      You cited no fact stating 648.
+
+Rewrite the brief. Fix <span class="k">only</span> these.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ======================================================================
+     SLIDE 8 - HOW I REFINED IT (required deliverable: validation steps)
+     Rebuilt around the loop rather than a scoreboard. The "harness was wrong"
+     story is the one that shows the validation itself was iterated.
+     ====================================================================== -->
+<section class="slide" id="s8">
+    <div class="slide-head">
+        <span class="brand">Validation</span>
+        <span class="num"><b>08</b> / 08</span>
+    </div>
+    <div class="slide-content">
+        <div class="two-col">
+            <div>
+                <div class="reveal kicker">How I refined it</div>
+                <h2 class="reveal">The eval told me what to fix.</h2>
+                <ul class="claims tight reveal">
+                    <li><span class="i">01</span><span class="t">Declare the right answer first<span>For each of the eight doctors I wrote down what the copilot <em>should</em> do, and which exact fact it must cite, before generating anything.</span></span></li>
+                    <li><span class="i">02</span><span class="t">Generate, and let the validator reject<span>Anything that misses the declared answer fails. No human judgement in the loop.</span></span></li>
+                    <li><span class="i">03</span><span class="t">Read the failure, not the score<span>Not "bad output." It says: <em>you dropped "typically" from xf&#8209;turnaround&#8209;01.</em></span></span></li>
+                    <li><span class="i">04</span><span class="t">Fix the prompt. Re&#8209;run. Measure.<span>Four versions, each driven by a named failure.</span></span></li>
+                </ul>
+
+                <div class="score reveal">
+                    <div class="row"><span class="k">The prompt on its own</span><span class="v">7&#8211;8 / 8</span></div>
+                    <div class="row"><span class="k">What the rep actually gets</span><span class="v hit">8 / 8</span></div>
+                    <p class="sn">I report both. The second number includes the one retry, so quoting it alone would credit the prompt for what the retry fixed.</p>
+                </div>
+            </div>
+
+            <div class="reveal">
+                <div class="col-label cut">Four times, the harness was wrong</div>
+                <div class="quote">
+                    <span class="ql">The model wrote</span>
+                    <p class="qt">"This is a typical expectation, <strong>not a guaranteed turnaround</strong>."</p>
+                    <span class="ql">The validator blocked it</span>
+                    <p class="qt">for using the word "guaranteed."</p>
+                </div>
+                <p class="note">The model was doing exactly what the rule existed to enforce, and got punished for saying the safe thing out loud.
+                <b>So I fixed the check, not the model.</b> Negated phrases are now stripped before the prohibition runs. "We guarantee 7 days" is still blocked.</p>
+                <p class="note dim">A validator you never correct is a validator you do not trust.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<script>
+/* ===========================================================================
+   SLIDE PRESENTATION CONTROLLER
+   Keyboard, wheel, touch, progress bar, nav dots, scroll-triggered reveals.
+   =========================================================================== */
+class SlidePresentation {
+    constructor() {
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.current = 0;
+        this.setupIntersectionObserver();
+        this.setupNavDots();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupProgress();
+    }
+
+    /* Add .visible when a slide enters view, which fires its staggered reveals. */
+    setupIntersectionObserver() {
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach((e) => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('visible');
+                    this.current = this.slides.indexOf(e.target);
+                    this.syncChrome();
+                }
+            });
+        }, { threshold: 0.5 });
+        this.slides.forEach((s) => io.observe(s));
+    }
+
+    setupNavDots() {
+        const nav = document.getElementById('navDots');
+        this.slides.forEach((s, i) => {
+            const b = document.createElement('button');
+            b.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+            b.addEventListener('click', () => this.goTo(i));
+            nav.appendChild(b);
+        });
+        this.dots = Array.from(nav.children);
+    }
+
+    setupProgress() { this.bar = document.getElementById('progressBar'); this.syncChrome(); }
+
+    syncChrome() {
+        if (this.dots) this.dots.forEach((d, i) => d.classList.toggle('active', i === this.current));
+        if (this.bar) this.bar.style.width = ((this.current + 1) / this.slides.length * 100) + '%';
+    }
+
+    goTo(i) {
+        i = Math.max(0, Math.min(this.slides.length - 1, i));
+        this.slides[i].scrollIntoView({ behavior: 'smooth' });
+    }
+
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            /* Never hijack keys while the user is editing text. */
+            if (e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') return;
+            if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) {
+                e.preventDefault(); this.goTo(this.current + 1);
+            } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
+                e.preventDefault(); this.goTo(this.current - 1);
+            } else if (e.key === 'Home') { e.preventDefault(); this.goTo(0); }
+            else if (e.key === 'End')  { e.preventDefault(); this.goTo(this.slides.length - 1); }
+        });
+    }
+
+    setupTouchNav() {
+        let y0 = null;
+        document.addEventListener('touchstart', (e) => { y0 = e.changedTouches[0].clientY; }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            if (y0 === null) return;
+            const dy = y0 - e.changedTouches[0].clientY;
+            if (Math.abs(dy) > 60) this.goTo(this.current + (dy > 0 ? 1 : -1));
+            y0 = null;
+        }, { passive: true });
+    }
+}
+
+/* ===========================================================================
+   INLINE EDITOR
+   Click any text to edit. Ctrl/Cmd+S persists to localStorage. Export writes
+   a fresh HTML file with the edits baked in.
+   =========================================================================== */
+class InlineEditor {
+    constructor() {
+        this.isActive = false;
+        /* Everything a human might want to reword. */
+        this.sel = 'h1, h2, .kicker, .lede, .note, .claims .t, .claims .t span, .src .h, .src .p, ' +
+                   '.pipe .sl, .pipe .sd, .shot-cap, .slide-foot span, .tbl td, .tbl th';
+        this.restore();
+        document.getElementById('exportBtn').addEventListener('click', () => this.export());
+    }
+
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        document.body.classList.toggle('editing', this.isActive);
+        document.getElementById('editToggle').classList.toggle('active', this.isActive);
+        document.querySelectorAll(this.sel).forEach((el) => {
+            el.setAttribute('contenteditable', this.isActive ? 'true' : 'false');
+        });
+    }
+
+    /* Key on slide index + selector index, so edits survive a reload. */
+    key(el) {
+        const slide = el.closest('.slide');
+        const all = Array.from(slide.querySelectorAll(this.sel));
+        return slide.id + ':' + all.indexOf(el);
+    }
+
+    save() {
+        const data = {};
+        document.querySelectorAll(this.sel).forEach((el) => { data[this.key(el)] = el.innerHTML; });
+        localStorage.setItem('tempus-deck-edits', JSON.stringify(data));
+        this.flash('Saved');
+    }
+
+    restore() {
+        const raw = localStorage.getItem('tempus-deck-edits');
+        if (!raw) return;
+        try {
+            const data = JSON.parse(raw);
+            document.querySelectorAll(this.sel).forEach((el) => {
+                const v = data[this.key(el)];
+                if (v !== undefined) el.innerHTML = v;
+            });
+        } catch (_) { /* corrupt payload: ignore rather than break the deck */ }
+    }
+
+    export() {
+        const clone = document.documentElement.cloneNode(true);
+        /* Strip editing state so the exported file opens clean. */
+        clone.querySelectorAll('[contenteditable]').forEach((el) => el.removeAttribute('contenteditable'));
+        clone.querySelector('body').classList.remove('editing');
+        const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'tempus-sales-copilot.html';
+        a.click();
+    }
+
+    flash(msg) {
+        const el = document.querySelector('.edit-bar span');
+        const prev = el.innerHTML;
+        el.innerHTML = msg;
+        setTimeout(() => { el.innerHTML = prev; }, 1200);
+    }
+}
+
+const deck = new SlidePresentation();
+const editor = new InlineEditor();
+
+/* --- Edit-mode affordances: click the toggle, hover the hotzone, or press E ---
+   The 400ms grace period is required: without it the button vanishes as the
+   cursor travels from the hotzone toward it. */
+const hotzone = document.querySelector('.edit-hotzone');
+const editToggle = document.getElementById('editToggle');
+let hideTimeout = null;
+
+editToggle.addEventListener('click', () => editor.toggleEditMode());
+hotzone.addEventListener('click', () => editor.toggleEditMode());
+
+hotzone.addEventListener('mouseenter', () => {
+    clearTimeout(hideTimeout);
+    editToggle.classList.add('show');
+});
+hotzone.addEventListener('mouseleave', () => {
+    hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400);
+});
+editToggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+editToggle.addEventListener('mouseleave', () => {
+    hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove('show'); }, 400);
+});
+
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'e' || e.key === 'E') && e.target.getAttribute &&
+        e.target.getAttribute('contenteditable') !== 'true') {
+        editor.toggleEditMode();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); editor.save(); }
+});
+</script>
+</body>
+</html>
