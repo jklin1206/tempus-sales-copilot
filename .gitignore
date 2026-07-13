@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Secrets. The model key is server-side only and never committed.
+.env
+.env.local
+.env*.local
+
+# Editor and OS
+.DS_Store
+.vercel/
+
+# Parallel Codex implementation of the same spec. Left on disk, kept out of this
+# build and out of this app's history. Owned by whoever is running Codex.
+codex-prototype/
+.vercel

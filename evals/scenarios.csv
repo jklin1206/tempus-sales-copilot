@@ -1,0 +1,9 @@
+physician_id,expected_product_family,expected_objection_category,expected_behavior,required_claim_ids
+p01,none,cost_and_reimbursement,abstain,
+p02,xf,turnaround_time,grounded_response,xf-turnaround-01
+p11,xf_plus,liquid_panel_breadth,grounded_response,xf-plus-identity-01
+p03,xf_plus,insufficient_tissue_and_breadth,grounded_response,xt-xf-conversion-01|xf-plus-identity-01
+p07,xr,fusion_detection,qualified_response,xr-capability-01|xr-study-fusion-uplift-01
+p08,xt_cdx_xr,tissue_panel_breadth,grounded_response,xt-cdx-identity-01|xr-capability-01
+p04,xr,current_vendor,supported_with_caveat,xr-capability-01
+p09,xt_heme_xr,heme_breadth_and_turnaround,grounded_response,xt-heme-identity-01|xt-heme-turnaround-01

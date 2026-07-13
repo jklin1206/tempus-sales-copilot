@@ -1,0 +1,83 @@
+{
+  "physician_id": "p04",
+  "grounding_status": "grounded",
+  "product_ids": [
+    "xr"
+  ],
+  "why_tempus": "Dr. Okafor is interested in how combined DNA and RNA profiling adds information for fusion-driven cases. xR provides whole-transcriptome RNA sequencing to identify clinically relevant fusions.",
+  "supporting_crm_excerpt": "He is willing to hear where combined DNA and RNA profiling could add information, especially for fusion-driven cases.",
+  "product_snapshot": [
+    {
+      "fact_id": "xr-capability-01",
+      "display_text": "xR provides whole-transcriptome RNA sequencing for solid tumors and hematologic malignancies."
+    },
+    {
+      "fact_id": "xr-fusion-coverage-01",
+      "display_text": "xR reports clinically relevant fusions across more than 100 targeted genes."
+    },
+    {
+      "fact_id": "xr-study-fusion-uplift-01",
+      "display_text": "In a retrospective analysis of patients with identified fusions, incorporating RNA sequencing identified 29% more patients with a unique clinically actionable fusion match than DNA sequencing alone."
+    }
+  ],
+  "objection_response": {
+    "text": "In a retrospective analysis of patients with identified fusions, incorporating RNA sequencing identified 29% more patients with a unique clinically actionable fusion match than DNA sequencing alone. This capability is supported by xR, which provides whole-transcriptome RNA sequencing for solid tumors and hematologic malignancies. xR reports clinically relevant fusions across more than 100 targeted genes, providing additional information beyond DNA sequencing alone for your complex GI tumor cases.",
+    "fact_ids": [
+      "xr-study-fusion-uplift-01",
+      "xr-capability-01",
+      "xr-fusion-coverage-01"
+    ]
+  },
+  "meeting_script": {
+    "text": "Dr. Okafor, thank you for sharing your focus on complex GI tumors and your interest in fusion-driven cases. xR provides whole-transcriptome RNA sequencing for solid tumors, which reports clinically relevant fusions across more than 100 targeted genes. This approach helps identify unique actionable fusion matches that might otherwise be missed by DNA sequencing alone. Would you be open to reviewing a case where RNA sequencing provided additional insights for a patient with a complex GI tumor?",
+    "fact_ids": [
+      "xr-capability-01",
+      "xr-fusion-coverage-01"
+    ]
+  },
+  "abstention_reason": "",
+  "generation_mode": "demo_fixture",
+  "prompt_version": "meeting-prep-v4",
+  "data_version": "2026-07-12",
+  "trace": {
+    "crm_note_loaded": "data/crm/p04.md",
+    "vault_notes_loaded": [
+      "xF-and-xF-Plus.md",
+      "xR.md",
+      "xT-CDx.md",
+      "xT-Heme.md"
+    ],
+    "vault_fact_count": 34,
+    "cited_fact_ids": [
+      "xr-capability-01",
+      "xr-fusion-coverage-01",
+      "xr-study-fusion-uplift-01"
+    ],
+    "checks_passed": [
+      "physician_id_matches_request",
+      "all_cited_facts_exist_in_vault",
+      "product_ids_agree_with_cited_facts",
+      "crm_excerpt_is_exact_substring",
+      "no_cross_provider_crm_leakage",
+      "qualifiers_preserved:xr-capability-01",
+      "qualifiers_preserved:xr-fusion-coverage-01",
+      "qualifiers_preserved:xr-study-fusion-uplift-01",
+      "qualifiers_preserved_in_objection:xr-study-fusion-uplift-01",
+      "qualifiers_preserved_in_objection:xr-capability-01",
+      "qualifiers_preserved_in_objection:xr-fusion-coverage-01",
+      "qualifiers_preserved_in_script:xr-capability-01",
+      "qualifiers_preserved_in_script:xr-fusion-coverage-01",
+      "numbers_trace_to_cited_facts",
+      "no_prohibited_claims",
+      "script_word_count_65_to_80",
+      "script_cites_at_most_two_facts",
+      "snapshot_has_2_to_4_facts",
+      "grounded_objection_cites_a_fact",
+      "script_facts_appear_in_snapshot"
+    ],
+    "checks_failed": [],
+    "latency_ms": 2099,
+    "provider": "google",
+    "model": "gemini-3.1-flash-lite"
+  }
+}

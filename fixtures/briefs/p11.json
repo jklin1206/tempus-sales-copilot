@@ -1,0 +1,92 @@
+{
+  "physician_id": "p11",
+  "grounding_status": "grounded",
+  "product_ids": [
+    "xf",
+    "xf_plus"
+  ],
+  "why_tempus": "Dr. Rahman requested a broader liquid-biopsy option for patients when tissue is scarce. Tempus offers both the 105-gene xF panel and the 523-gene xF+ panel to support her clinical needs.",
+  "supporting_crm_excerpt": "She asked whether Tempus offers a broader liquid-biopsy option beyond a focused panel.",
+  "product_snapshot": [
+    {
+      "fact_id": "xf-identity-01",
+      "display_text": "xF is a 105-gene liquid-biopsy ctDNA panel that detects SNVs, INDELs, copy-number gains, and gene rearrangements."
+    },
+    {
+      "fact_id": "xf-plus-identity-01",
+      "display_text": "xF+ is a 523-gene liquid-biopsy panel covering SNVs, INDELs, copy-number gains, and gene rearrangements."
+    },
+    {
+      "fact_id": "xf-turnaround-01",
+      "display_text": "xF results are typically expected within 7 days of specimen retrieval."
+    },
+    {
+      "fact_id": "xf-plus-turnaround-01",
+      "display_text": "xF+ results are typically expected within 7 to 9 days of specimen retrieval."
+    }
+  ],
+  "objection_response": {
+    "text": "Tempus provides two distinct liquid-biopsy options to address your concern regarding panel breadth. The xF panel is a 105-gene liquid-biopsy ctDNA panel, while the xF+ panel is a 523-gene liquid-biopsy panel. Both panels cover SNVs, INDELs, copy-number gains, and gene rearrangements. Results for xF are typically expected within 7 days of specimen retrieval, and xF+ results are typically expected within 7 to 9 days of specimen retrieval.",
+    "fact_ids": [
+      "xf-identity-01",
+      "xf-plus-identity-01",
+      "xf-turnaround-01",
+      "xf-plus-turnaround-01"
+    ]
+  },
+  "meeting_script": {
+    "text": "Dr. Rahman, thank you for sharing your interest in broader liquid-biopsy options for your breast cancer patients. To address this, Tempus offers the 105-gene xF panel and the 523-gene xF+ panel. Both options provide comprehensive coverage for SNVs, INDELs, copy-number gains, and gene rearrangements. Results for xF are typically expected within 7 days of specimen retrieval, while xF+ results are typically expected within 7 to 9 days. Would you like to review the xF+ panel specifications today?",
+    "fact_ids": [
+      "xf-identity-01",
+      "xf-plus-identity-01"
+    ]
+  },
+  "abstention_reason": "",
+  "generation_mode": "demo_fixture",
+  "prompt_version": "meeting-prep-v4",
+  "data_version": "2026-07-12",
+  "trace": {
+    "crm_note_loaded": "data/crm/p11.md",
+    "vault_notes_loaded": [
+      "xF-and-xF-Plus.md",
+      "xR.md",
+      "xT-CDx.md",
+      "xT-Heme.md"
+    ],
+    "vault_fact_count": 34,
+    "cited_fact_ids": [
+      "xf-identity-01",
+      "xf-plus-identity-01",
+      "xf-turnaround-01",
+      "xf-plus-turnaround-01"
+    ],
+    "checks_passed": [
+      "physician_id_matches_request",
+      "all_cited_facts_exist_in_vault",
+      "product_ids_agree_with_cited_facts",
+      "crm_excerpt_is_exact_substring",
+      "no_cross_provider_crm_leakage",
+      "qualifiers_preserved:xf-identity-01",
+      "qualifiers_preserved:xf-plus-identity-01",
+      "qualifiers_preserved:xf-turnaround-01",
+      "qualifiers_preserved:xf-plus-turnaround-01",
+      "qualifiers_preserved_in_objection:xf-identity-01",
+      "qualifiers_preserved_in_objection:xf-plus-identity-01",
+      "qualifiers_preserved_in_objection:xf-turnaround-01",
+      "qualifiers_preserved_in_objection:xf-plus-turnaround-01",
+      "qualifiers_preserved_in_script:xf-identity-01",
+      "qualifiers_preserved_in_script:xf-plus-identity-01",
+      "numbers_trace_to_cited_facts",
+      "no_prohibited_claims",
+      "script_word_count_65_to_80",
+      "script_cites_at_most_two_facts",
+      "snapshot_has_2_to_4_facts",
+      "grounded_objection_cites_a_fact",
+      "script_facts_appear_in_snapshot"
+    ],
+    "checks_failed": [],
+    "latency_ms": 2484,
+    "provider": "google",
+    "model": "gemini-3.1-flash-lite"
+  }
+}

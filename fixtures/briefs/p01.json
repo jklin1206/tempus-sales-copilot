@@ -1,0 +1,49 @@
+{
+  "physician_id": "p01",
+  "grounding_status": "abstain",
+  "product_ids": [],
+  "why_tempus": "Dr. Ruiz requested information regarding patient out-of-pocket exposure and the reimbursement pathway for comprehensive tissue profiling. I cannot provide information on these topics from the available product facts.",
+  "supporting_crm_excerpt": "She asked for specifics on patient out-of-pocket exposure and the reimbursement pathway before considering a change.",
+  "product_snapshot": [],
+  "objection_response": {
+    "text": "I understand that clarity on out-of-pocket costs and the reimbursement process is essential for your practice. I do not have access to approved product facts regarding pricing, payer coverage, or patient financial responsibility. I will route your inquiry to the appropriate Tempus team member who can provide the necessary information regarding our reimbursement support services.",
+    "fact_ids": []
+  },
+  "meeting_script": {
+    "text": "Dr. Ruiz, thank you for meeting with me today to discuss your breast oncology practice. I understand you are looking for specific details regarding patient out-of-pocket exposure and the reimbursement pathway for comprehensive profiling. I do not have information on those topics in my current product materials. I would like to connect you with the right person at Tempus who can address these questions directly. May I facilitate that introduction for you this week?",
+    "fact_ids": []
+  },
+  "abstention_reason": "The supplied product facts do not contain information regarding patient out-of-pocket costs, reimbursement pathways, or financial coverage.",
+  "generation_mode": "demo_fixture",
+  "prompt_version": "meeting-prep-v4",
+  "data_version": "2026-07-12",
+  "trace": {
+    "crm_note_loaded": "data/crm/p01.md",
+    "vault_notes_loaded": [
+      "xF-and-xF-Plus.md",
+      "xR.md",
+      "xT-CDx.md",
+      "xT-Heme.md"
+    ],
+    "vault_fact_count": 34,
+    "cited_fact_ids": [],
+    "checks_passed": [
+      "physician_id_matches_request",
+      "all_cited_facts_exist_in_vault",
+      "product_ids_agree_with_cited_facts",
+      "crm_excerpt_is_exact_substring",
+      "no_cross_provider_crm_leakage",
+      "numbers_trace_to_cited_facts",
+      "no_prohibited_claims",
+      "script_word_count_65_to_80",
+      "script_cites_at_most_two_facts",
+      "abstention_cites_no_facts",
+      "abstention_snapshot_is_empty",
+      "abstention_states_a_reason"
+    ],
+    "checks_failed": [],
+    "latency_ms": 2065,
+    "provider": "google",
+    "model": "gemini-3.1-flash-lite"
+  }
+}

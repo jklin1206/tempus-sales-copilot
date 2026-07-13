@@ -1,0 +1,41 @@
+{
+  "name": "tempus-sales-copilot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Meeting-preparation copilot for a Tempus territory sales representative (prototype, fictional PHI-free data).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "eval": "node --conditions=react-server --import tsx evals/run.ts",
+    "fixtures": "node --conditions=react-server --import tsx scripts/build-fixtures.ts"
+  },
+  "dependencies": {
+    "next": "^15.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "server-only": "^0.0.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
+    "@tailwindcss/postcss": "^4.1.11",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "dotenv": "^17.4.2",
+    "eslint": "^9.32.0",
+    "eslint-config-next": "^15.5.4",
+    "tailwindcss": "^4.1.11",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

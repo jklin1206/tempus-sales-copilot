@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+/**
+ * Design language adapted from the Codex prototype: warm paper rather than cold white, a single
+ * terracotta accent, stone neutrals, and large soft surfaces.
+ *
+ * The important idea it got right is not the palette, it is the CONDENSATION. A brief is one
+ * document, so it lives on one surface, with sections separated by small eyebrow labels and
+ * hairlines rather than by five floating cards each with its own border and shadow. A rep reads
+ * down it; they do not navigate it.
+ */
+@theme {
+  --color-paper: #f5f4f0;
+  --color-accent: #b6533f;
+  --color-accent-deep: #a14533;
+  --color-accent-soft: #f3e5e0;
+
+  --font-sans: var(--font-geist), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), "SFMono-Regular", Consolas, monospace;
+}
+
+html {
+  background: var(--color-paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  color: #1c1917; /* stone-900 */
+  background: var(--color-paper);
+}
+
+button,
+input {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+
+/* A single focus treatment, so keyboard navigation is never invisible. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Section label: the quiet uppercase line that names each part of the brief. */
+.eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #78716c; /* stone-500 */
+}
+
+/* The one big card. Everything in a brief sits on exactly one of these. */
+.surface {
+  overflow: hidden;
+  border: 1px solid rgba(214, 211, 209, 0.9);
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 24px 50px -38px rgba(79, 57, 48, 0.45);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.status-good {
+  background: #ecf4ef;
+  color: #326247;
+}
+.status-warn {
+  background: #fff4df;
+  color: #8a5a1f;
+}
+.status-muted {
+  background: #f5f5f4;
+  color: #57534e;
+}
+
+.metric-label {
+  font-size: 0.66rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a8a29e; /* stone-400 */
+}
+.metric-value {
+  font-family: var(--font-mono);
+  font-weight: 650;
+  color: #292524; /* stone-800 */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Generated prose. Looser leading than UI text: this is read, not scanned. */
+.generated-copy {
+  color: #44403c; /* stone-700 */
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+.generated-copy-dark {
+  color: #f5f5f4;
+}
+
+.row {
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 180ms;
+  animation: row-in 420ms both;
+}
+.row:hover {
+  background: #fafaf9;
+}
+.row:active {
+  transform: translateY(1px);
+}
+.row:nth-child(2) { animation-delay: 40ms; }
+.row:nth-child(3) { animation-delay: 80ms; }
+.row:nth-child(4) { animation-delay: 120ms; }
+.row:nth-child(5) { animation-delay: 160ms; }
+.row:nth-child(6) { animation-delay: 200ms; }
+.row:nth-child(7) { animation-delay: 240ms; }
+.row:nth-child(8) { animation-delay: 280ms; }
+
+.skeleton {
+  border-radius: 0.6rem;
+  background: #e7e5e4;
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  background-size: 220% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

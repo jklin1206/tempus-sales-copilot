@@ -1,0 +1,76 @@
+{
+  "physician_id": "p09",
+  "grounding_status": "grounded",
+  "product_ids": [
+    "xt_heme",
+    "xr"
+  ],
+  "why_tempus": "Dr. Santos requested a combined DNA and RNA option for hematologic malignancies. Tempus offers xT Heme with xR, which provides a 648-gene DNA and whole-transcriptome RNA assessment.",
+  "supporting_crm_excerpt": "She asked how broad the heme assay is and how long results typically take after the specimen is received.",
+  "product_snapshot": [
+    {
+      "fact_id": "xt-heme-identity-01",
+      "display_text": "Tempus describes xT Heme with xR as a combined 648-gene DNA and whole-transcriptome RNA assessment for hematologic malignancies."
+    },
+    {
+      "fact_id": "xt-heme-turnaround-01",
+      "display_text": "The Tempus xT Heme page states a turnaround time of 9 days from specimen receipt."
+    }
+  ],
+  "objection_response": {
+    "text": "The xT Heme assessment includes a 648-gene DNA panel and whole-transcriptome RNA sequencing. Regarding your question on timing, the Tempus xT Heme page states a turnaround time of 9 days from specimen receipt. This is a public product-page statement, not a guaranteed turnaround and not a service-level agreement.",
+    "fact_ids": [
+      "xt-heme-identity-01",
+      "xt-heme-turnaround-01"
+    ]
+  },
+  "meeting_script": {
+    "text": "Dr. Santos, thank you for meeting to discuss your interest in a combined DNA and RNA option for hematologic malignancies. The xT Heme assessment provides a 648-gene DNA and whole-transcriptome RNA assessment for these conditions. Regarding your question on timing, the Tempus xT Heme page states a turnaround time of 9 days from specimen receipt. Would you like to review the specific gene coverage or the process for ordering this assessment for your patients?",
+    "fact_ids": [
+      "xt-heme-identity-01",
+      "xt-heme-turnaround-01"
+    ]
+  },
+  "abstention_reason": "",
+  "generation_mode": "demo_fixture",
+  "prompt_version": "meeting-prep-v4",
+  "data_version": "2026-07-12",
+  "trace": {
+    "crm_note_loaded": "data/crm/p09.md",
+    "vault_notes_loaded": [
+      "xF-and-xF-Plus.md",
+      "xR.md",
+      "xT-CDx.md",
+      "xT-Heme.md"
+    ],
+    "vault_fact_count": 34,
+    "cited_fact_ids": [
+      "xt-heme-identity-01",
+      "xt-heme-turnaround-01"
+    ],
+    "checks_passed": [
+      "physician_id_matches_request",
+      "all_cited_facts_exist_in_vault",
+      "product_ids_agree_with_cited_facts",
+      "crm_excerpt_is_exact_substring",
+      "no_cross_provider_crm_leakage",
+      "qualifiers_preserved:xt-heme-identity-01",
+      "qualifiers_preserved:xt-heme-turnaround-01",
+      "qualifiers_preserved_in_objection:xt-heme-identity-01",
+      "qualifiers_preserved_in_objection:xt-heme-turnaround-01",
+      "qualifiers_preserved_in_script:xt-heme-identity-01",
+      "qualifiers_preserved_in_script:xt-heme-turnaround-01",
+      "numbers_trace_to_cited_facts",
+      "no_prohibited_claims",
+      "script_word_count_65_to_80",
+      "script_cites_at_most_two_facts",
+      "snapshot_has_2_to_4_facts",
+      "grounded_objection_cites_a_fact",
+      "script_facts_appear_in_snapshot"
+    ],
+    "checks_failed": [],
+    "latency_ms": 2151,
+    "provider": "google",
+    "model": "gemini-3.1-flash-lite"
+  }
+}
