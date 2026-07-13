@@ -321,11 +321,24 @@ The complete 34-fact vault fits comfortably in one request. Supplying the whole 
 retrieval misses, keeps every qualifier in front of the validator, and is easier to explain and
 evaluate.
 
-So there is no retriever, vector index, cosine similarity, or search tool, and calling this RAG
-would be branding rather than architecture. There is likewise no tool loop, no planner, and no
-model-selected action, and calling it an agent would be the same mistake with higher stakes: an
-evaluator hearing "agent" expects a system that decides what to do next, and this one cannot. The
-model has exactly one job, and it is to write words that code then checks.
+**Is it RAG?** Split the acronym and the answer is precise. The *augmented generation* half is
+exactly what this does: the model is grounded in external knowledge read at request time rather
+than in its own weights, and it may assert nothing the supplied facts do not support. The
+*retrieval* half is deliberately absent: there is no embedding, no vector index, no cosine
+similarity, no top-k, and no search tool. Every fact goes in every time.
+
+So the accurate description is RAG's architecture **with the retriever set to the identity
+function**, which is not a dodge but the literal shape of the code: `KnowledgeProvider` is the
+retriever seam (9.2), and `FullVaultKnowledgeProvider` is the implementation that retrieves
+everything. Claiming a retrieval step that does not exist would be branding; pretending the system
+is not grounded in external documents would be false. It is the first half of RAG, done properly,
+with the second half left out because at 6,500 tokens retrieve-everything strictly dominates it:
+perfect recall, by construction, at the same cost.
+
+There is likewise no tool loop, no planner, and no model-selected action, and calling it an agent
+would be a bigger mistake: an evaluator hearing "agent" expects a system that decides what to do
+next, and this one cannot. The model has exactly one job, and it is to write words that code then
+checks.
 
 That is still a real GenAI system, and the honest description of it is the one in the heading: the
 LLM performs bounded semantic matching and grounded synthesis over a fixed context, and code

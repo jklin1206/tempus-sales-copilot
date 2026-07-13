@@ -48,19 +48,34 @@ For live generation, copy `.env.example` to `.env` and set `GOOGLE_GENERATIVE_AI
 
 ---
 
-## The big tradeoff: no retrieval, no RAG
+## The big tradeoff: RAG's shape, with the retriever left out
 
-**The entire knowledge base goes into every request.** No retriever, no embeddings, no vector index.
+Split the acronym and the answer gets precise.
 
-This is deliberate. At this size, retrieval would make the product *worse*:
+**Augmented generation — yes.** The model is grounded in external knowledge read off disk at request time, never in its own weights. It may not assert anything the supplied facts don't support, and a validator enforces that.
 
-- **The corpus fits.** All 34 facts + the CRM note ≈ **6,500 tokens**, comfortably in one prompt. Retrieval solves "the corpus is too big to send." This one isn't.
-- **It would add a failure mode we don't have.** A retriever decides which facts the model never sees. Miss once and the brief is missing the fact that answered the question — and no validator can catch that, because it can only check claims that were made.
-- **It keeps every qualifier in front of the validator.** Grounding depends on words like *typically* and *retrospective* surviving into the prose. The whole vault is present at validation time, so every claim can be compared to its source. Chunking puts that at the mercy of a chunk boundary.
+**Retrieval — deliberately not.** No embeddings, no similarity, no top-k. All 34 facts go into every request, whatever the physician asked.
 
-**Where it breaks:** past a few hundred facts. That's when retrieval starts paying for itself. `KnowledgeProvider` is the seam it slots behind — `FullVaultKnowledgeProvider` today, `IndexedKnowledgeProvider` when the corpus needs one. The brief contract doesn't change.
+So this is **RAG's architecture with the retriever set to the identity function** — and that's not a dodge, it's literally the seam:
 
-Calling this RAG would be branding, not architecture.
+```ts
+interface KnowledgeProvider {
+  getContext(input: { physicianId: string }): Promise<KnowledgeContext>;
+}
+
+class FullVaultKnowledgeProvider implements KnowledgeProvider {}   // retrieve everything (today)
+class IndexedKnowledgeProvider implements KnowledgeProvider {}     // retrieve selectively (later)
+```
+
+At this size, retrieve-everything strictly dominates a retriever:
+
+- **The corpus fits.** 34 facts + the CRM note ≈ **6,500 tokens**, comfortably in one prompt. Retrieval solves "the corpus is too big to send." This one isn't.
+- **Perfect recall, by construction.** A retriever's job is deciding which facts the model *never sees*. Miss once and the brief is missing the fact that answered the question — and no validator can catch that, because it can only check claims that were made. Retrieve-everything cannot miss.
+- **Every qualifier stays in front of the validator.** Grounding depends on words like *typically* and *retrospective* surviving from fact into prose. The whole vault is present at validation time, so every claim can be checked against its source. Chunking puts that at the mercy of a chunk boundary.
+
+**Where it breaks:** past a few hundred facts, when the corpus stops fitting and the model's attention thins. That's when a retriever starts paying for itself — and swapping `IndexedKnowledgeProvider` in behind the same interface doesn't move the brief contract, the validator, or the evals.
+
+The honest summary: the *R* is the one piece of RAG this doesn't need yet, so it's the one piece that isn't built.
 
 ---
 
