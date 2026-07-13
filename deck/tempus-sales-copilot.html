@@ -223,6 +223,9 @@ h2 {
 
 /* Denser claim list, for slides carrying two columns of them. */
 .claims.tight { gap: clamp(.45rem,1.15vh,.8rem); margin-top:0; }
+/* ...but when the list sits directly under the headline rather than a column label,
+   margin-top:0 collides the first claim with the h2's descenders. */
+h2 + .claims.tight { margin-top: clamp(.7rem,1.7vh,1.15rem); }
 .claims.tight .t { font-size: clamp(.72rem,1.5vh,.95rem); }
 .claims.tight .t span { font-size: clamp(.6rem,1.25vh,.78rem); line-height:1.5; }
 .claims.tight .t span strong { color:var(--ink); font-weight:600; }
@@ -462,6 +465,7 @@ h2 {
     .focus .ft   { font-size:.88rem !important; }
     .col-label   { font-size:.72rem !important; }
     .cut-note    { font-size:.8rem !important; }
+    .note        { font-size:.7rem !important; }
     .tools .tl        { font-size:.68rem !important; }
     .tools .tags span { font-size:.82rem !important; }
     .tradeoff .tl     { font-size:.7rem !important; }
@@ -474,6 +478,7 @@ h2 {
     .quote .qt        { font-size:.87rem !important; }
     .claims.tight .t      { font-size:.95rem !important; }
     .claims.tight .t span { font-size:.78rem !important; }
+    h2 + .claims.tight    { margin-top:18px !important; }
 
     /* Hard pixel ceiling on screenshots. vh is unreliable inside a print page box,
        and an unconstrained image is what overflowed the page in the first place. */
@@ -591,7 +596,7 @@ body.editing .edit-bar { display:flex; }
                 <div class="col-label">Assumptions</div>
                 <ul class="claims tight">
                     <li><span class="i">01</span><span class="t">"Provider" means the oncologist<span>The case study's word, and standard healthcare usage. The meeting is with a doctor or a CMO.</span></span></li>
-                    <li><span class="i">02</span><span class="t">Population is a directional proxy<span>"Ordered by impact" is asked for, but impact is not in the data. I sort by the one real signal and label it, rather than invent a composite score that looks clever and means nothing.</span></span></li>
+                    <li><span class="i">02</span><span class="t">Impact is a magnitude, not a guess<span>"Ordered by impact" asks how much is at stake, and the data carries exactly one magnitude: patient population. That is the sort. What it does <em>not</em> carry is propensity, so I refuse to invent one.</span></span></li>
                     <li><span class="i">03</span><span class="t">The prototype begins after ingestion<span>Committed snapshots. No Salesforce sync, no live scraping, no database.</span></span></li>
                     <li><span class="i">04</span><span class="t">Product facts are public&#8209;page only<span>So no pricing or coverage fact exists, and a cost question routes to a human. An eval check asserts that gap stays a gap.</span></span></li>
                 </ul>
@@ -626,6 +631,15 @@ body.editing .edit-bar { display:flex; }
             <div class="shot-wrap reveal">
                 <img class="shot" src="assets/01-territory-crop.png" alt="Territory list of eight oncologists ranked by opportunity">
                 <div class="shot-cap">Ranked by likely patient population</div>
+            </div>
+        </div>
+
+        <div class="tradeoff reveal">
+            <span class="tl">The tradeoff: one honest sort, not a sales score</span>
+            <div class="tg">
+                <div><b>Expected value = impact &times; propensity.</b> "Ordered by impact" asks for the first term. The data supplies exactly one magnitude, <em>likely patient population</em>, so that is the sort, and the column says <em>directional proxy</em> out loud.</div>
+                <div><b>Propensity is the term nobody was given.</b> No conversion history, no won/lost, no engagement. A 1&#8209;100 "lead score" fits weights to eight unlabeled rows across eight one&#8209;off concerns. It would look calibrated and be unfalsifiable.</div>
+                <div><b>The CRM signal is used where it can be checked.</b> It picks the products, the facts, the objection, the script &mdash; all validated against the vault. It never becomes a number, because in a ranking nothing could check it.</div>
             </div>
         </div>
     </div>
@@ -702,7 +716,7 @@ body.editing .edit-bar { display:flex; }
         <div class="tradeoff reveal">
             <span class="tl">The tradeoff: no RAG, no agent loop</span>
             <div class="tg">
-                <div><b>34 facts fit in one request.</b> At this size a retriever can only lose, by dropping the one fact that mattered. No embeddings, no vector store, and no retrieval failure mode to debug.</div>
+                <div><b>The whole vault is ~6,500 tokens.</b> It fits in one prompt with room to spare, so there is nothing to retrieve <em>from</em>. A retriever here can only lose, by dropping the one fact that answered the question.</div>
                 <div><b>The model never picks a tool or decides to retry.</b> Code does. Every run is reproducible, and every failure is a test rather than a mystery.</div>
                 <div><b>The seam is already drawn.</b> Retrieval drops in behind the knowledge interface the day the corpus earns it. Nothing above it changes.</div>
             </div>
@@ -757,7 +771,7 @@ body.editing .edit-bar { display:flex; }
                 <div class="reveal kicker">How I arrived at it</div>
                 <h2 class="reveal">Spec first. Deterministic layers. Then the model.</h2>
                 <ul class="claims tight reveal">
-                    <li><span class="i">01</span><span class="t">Wrote the brief contract and the validation rules before any code</span></li>
+                    <li><span class="i">01</span><span class="t">Wrote the spec before any code<span><strong>SPEC.md</strong> settled the brief contract, the validation rules, and the schemas. It is what Claude Code and Codex built against. The spec was the prompt.</span></span></li>
                     <li><span class="i">02</span><span class="t">Built everything that needs no model first<span>Loaders, the ranking, the validator. All testable without a single API call.</span></span></li>
                     <li><span class="i">03</span><span class="t">Added the model last, constrained by the validator it would be graded on</span></li>
                     <li><span class="i">04</span><span class="t">Iterated the prompt against an eval, not against taste<span>Four versions, each driven by a measured failure.</span></span></li>
@@ -792,6 +806,7 @@ Your previous brief was <span class="k">REJECTED</span>.
       You cited no fact stating 648.
 
 Rewrite the brief. Fix <span class="k">only</span> these.</div>
+                <p class="note">Every version, and the measured failure behind it: <b>prompts/meeting&#8209;prep&#8209;v1..v4.md</b> + <b>prompts/CHANGELOG.md</b>.</p>
             </div>
         </div>
     </div>

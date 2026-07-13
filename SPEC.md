@@ -252,6 +252,48 @@ proxy only.
 
 There is no second, urgency-based ranking. See section 0.
 
+### 7.1 What "impact" means, and what it deliberately excludes
+
+The case study asks for a provider list **ordered by impact**, and the word decides the design, so
+it is worth defining precisely.
+
+What a rep ultimately wants is expected value, which decomposes:
+
+```text
+expected value  =  impact  ×  propensity
+                   (how much it     (how likely it
+                    matters if it     is to happen)
+                    happens)
+```
+
+**Impact is a magnitude, and the supplied data carries exactly one:** `likely_patient_population`.
+If a 310-patient practice adopts Tempus, more testing volume moves than if a 140-patient practice
+does. That is arithmetic on a supplied column, not a model output, and it is the term the brief
+asked to sort by. So it is the sort.
+
+**Propensity is the term nobody was given.** Estimating it needs conversion history, won/lost
+outcomes, prior orders, or engagement data. The dataset contains none: eight rows, no labels, no
+outcomes. Nothing to fit to and nothing to validate against.
+
+A composite "sales potential score" (say, 1 to 100, blending population with CRM sentiment such as
+dissatisfaction with turnaround or with a current vendor) is therefore **answering a different
+question than the one asked**. Dissatisfaction is a buying-readiness signal: it is a propensity
+proxy wearing an impact label. Worse, it is uncalibratable here. Every one of the eight CRM notes
+carries exactly one concern, and all eight concerns are distinct, so such a score fits weights to
+eight unlabeled points across eight categories that each occur once, with no ground truth to check
+them against. It would look calibrated, it could not be wrong, and "why 87 and not 74?" would have
+no answer.
+
+**The CRM signal is not ignored. It is used where it can be checked.** It selects the products, the
+cited facts, the objection response, and the script, and every claim it produces is validated
+against the vault before a rep sees it. It is kept out of the ranking because a ranking has no
+validator: there is nothing there that could catch it being wrong.
+
+**What would earn the second term:** outcome labels from Salesforce (won/lost, ordered/not) plus the
+governed catalyst feed of section 17. With those, `expected value = impact × propensity` becomes
+measurable rather than asserted, and the ranking can be evaluated instead of merely defended. That
+is a data problem before it is a model problem, and it is the highest-value thing to add.
+
 ## 8. Context builder and generation workflow
 
 ### 8.1 Context builder

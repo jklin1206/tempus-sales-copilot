@@ -19,6 +19,24 @@ It's a **bounded grounded-generation workflow, not an agent**: the steps are fix
 
 ![Ranked territory](deck/assets/01-territory-crop.png)
 
+<details>
+<summary><b>Why a plain sort, and not a 1–100 "sales potential score"?</b> The brief asks for a list <i>ordered by impact</i> — so what is impact?</summary>
+
+<br>
+
+**Expected value = impact × propensity.**
+
+- **Impact is a magnitude**, and the data supplies exactly one: `likely_patient_population`. A 310-patient practice adopting Tempus moves more volume than a 140-patient one. That's arithmetic on a supplied column, and it's the term the brief asked to sort by.
+- **Propensity is the term nobody was given.** No conversion history, no won/lost, no engagement data. Nothing to fit to, nothing to validate against.
+
+A score blending population with CRM sentiment ("dissatisfied with turnaround → hotter lead") is answering *propensity*, not impact — a buying-readiness proxy wearing an impact label. And it can't be calibrated here: all 8 CRM notes carry exactly one concern each, and all 8 are distinct, so the score fits weights to **eight unlabeled points across eight one-off categories**. It would look calibrated and be unfalsifiable. *Why 87 and not 74?* has no answer.
+
+**The CRM signal isn't ignored — it's used where it can be checked.** It picks the products, the facts, the objection, and the script, and every claim it produces is validated against the vault. It stays out of the ranking because a ranking has no validator.
+
+**What would earn the second term:** outcome labels from Salesforce, plus the catalyst feed. Then expected value is *measured* rather than asserted. That's a data problem before it's a model problem.
+
+</details>
+
 **A grounded brief.** Each talking point links to the Tempus page it came from. Script is held to 65–80 words.
 
 The model wrote *"a typical expectation and not a guaranteed turnaround"* on its own. The validator only requires the word "typically" to survive from the source fact — the disclaimer was the model's idea, and it's true, so it stands.
@@ -86,7 +104,7 @@ The honest summary: the *R* is the one piece of RAG this doesn't need yet, so it
 | A brief fails validation | **Discard all of it.** Blocking the pitch means blocking every sentence. | The rep sometimes gets an error, not a brief. |
 | Who checks grounding | **A mechanical validator, not an LLM judge.** A model checking a model gives you two things that can hallucinate. | Brittle string rules. Four times the harness was wrong and the model was right. |
 | A rejected draft | **One repair call, shown exactly which checks failed.** A redraw learns nothing. | One extra call of latency. |
-| Ranking | **A plain sort by population.** | Crude — and the only thing the data supports. |
+| Ranking | **A plain sort by population.** Impact is a magnitude; that's the only one the data has. | No propensity term — but there's no data to build one from, and a 1–100 lead score would be unfalsifiable. |
 | "Why now" | **Absent, and said so.** It needs a governed catalyst feed the data doesn't have. | No dated reason to call today. An invented one would be worse. |
 | Pricing questions | **Abstain, route to a human.** | Can't answer the most common objection in the CRM notes. It says so. |
 | What the browser gets | **Finished prose + one source link per claim.** No fact IDs, no vault, no trace. | The rep can't audit grounding. Deliberate: it's a guarantee, not homework. |
