@@ -40,15 +40,47 @@ interface Check {
   detail?: string;
 }
 
+/**
+ * A scenario has three outcomes, not two, and collapsing the last two is the bug this
+ * type exists to prevent.
+ *
+ *   pass    the brief was generated and every assertion held.
+ *   fail    the brief was generated and an assertion did not hold.  <- the quality signal
+ *   error   no brief was generated at all: rate limit, quota, network.
+ *
+ * An `error` says nothing whatsoever about the prompt. Scoring it as a failure is how a
+ * 429 storm comes to look like a grounding failure, and it is how a spent free-tier
+ * quota can silently report itself as a worse prompt. The quality rate is therefore
+ * computed over completed generations only, and errors are reported separately and
+ * loudly rather than averaged into the number.
+ */
+type Outcome = "pass" | "fail" | "error";
+
 interface ScenarioResult {
   scenario: GoldenScenario;
   checks: Check[];
+  outcome: Outcome;
+  /** True only for `pass`. Kept for readability at the call sites. */
   passed: boolean;
   source: "live" | "fixture" | "missing";
+  /** Set on `error`: why no brief was produced. */
+  errorMessage?: string;
 }
+
+/**
+ * Seconds between scenarios, in live mode.
+ *
+ * Gemini's free tier is limited per minute. Eight generations back to back will trip it, and
+ * `--product` doubles the calls by repairing. Pacing the harness is not politeness: an eval that
+ * induces its own 429s is measuring its own request rate, not the prompt.
+ *
+ * Override with EVAL_PACE_MS=0 on a paid key, where the limit does not bite.
+ */
+const PACE_MS = Number(process.env.EVAL_PACE_MS ?? 6_000);
 
 const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
 const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
+const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
 
@@ -199,22 +231,54 @@ function checkScenario(scenario: GoldenScenario, brief: Brief): Check[] {
   return checks;
 }
 
+/**
+ * Attempts before a scenario is declared un-generatable.
+ *
+ * A rate limit is not a verdict on the prompt, so the harness waits it out rather than
+ * recording it. Only when the provider will not produce a brief at all does the scenario
+ * become an `error`.
+ */
+const GENERATION_ATTEMPTS = 3;
+const ERROR_BACKOFF_MS = 65_000;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function runScenario(scenario: GoldenScenario): Promise<ScenarioResult> {
   let brief: Brief | null = null;
   let source: ScenarioResult["source"] = "missing";
 
   if (runMode() === "live") {
-    try {
-      brief = await getBrief(scenario.physicianId, { mode: "live", repair: PRODUCT_MODE });
-      source = "live";
-    } catch (error) {
-      // One scenario erroring must not abort the suite: the others still carry information,
-      // and an aborted run reports nothing at all.
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= GENERATION_ATTEMPTS; attempt++) {
+      try {
+        brief = await getBrief(scenario.physicianId, { mode: "live", repair: PRODUCT_MODE });
+        source = "live";
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error as Error;
+
+        // The provider could not be reached, or would not answer. That is infrastructure,
+        // not grounding, so it is retried rather than scored. A free-tier limit is measured
+        // per minute, so the wait has to clear a minute to be worth anything.
+        if (attempt < GENERATION_ATTEMPTS) {
+          console.log(dim(`        … ${lastError.message}`));
+          console.log(dim(`        … retrying in ${ERROR_BACKOFF_MS / 1000}s (attempt ${attempt + 1}/${GENERATION_ATTEMPTS})`));
+          await sleep(ERROR_BACKOFF_MS);
+        }
+      }
+    }
+
+    if (lastError || !brief) {
+      // Never generated. Excluded from the quality rate, surfaced on its own.
       return {
         scenario,
         source: "live",
+        outcome: "error",
         passed: false,
-        checks: [{ name: "generation completed", ok: false, detail: (error as Error).message }],
+        errorMessage: lastError?.message ?? "no brief was produced",
+        checks: [],
       };
     }
   } else {
@@ -227,18 +291,15 @@ async function runScenario(scenario: GoldenScenario): Promise<ScenarioResult> {
       scenario,
       source: "missing",
       passed: false,
-      checks: [
-        {
-          name: "a brief is available to evaluate",
-          ok: false,
-          detail: "No provider key and no committed fixture. Run `npm run fixtures` with a key set.",
-        },
-      ],
+      outcome: "error",
+      errorMessage: "No provider key and no committed fixture. Run `npm run fixtures` with a key set.",
+      checks: [],
     };
   }
 
   const checks = checkScenario(scenario, brief);
-  return { scenario, checks, passed: checks.every((c) => c.ok), source };
+  const passed = checks.every((c) => c.ok);
+  return { scenario, checks, passed, outcome: passed ? "pass" : "fail", source };
 }
 
 async function main() {
@@ -268,16 +329,25 @@ async function main() {
   console.log(bold("\nGolden scenarios"));
 
   const results: ScenarioResult[] = [];
-  for (const scenario of GOLDEN_SCENARIOS) {
-    // Sequential, not parallel: a free-tier key has a rate limit, and a 429 storm would look
-    // like a grounding failure.
+  for (const [index, scenario] of GOLDEN_SCENARIOS.entries()) {
+    // Sequential, and paced. Sequential alone was not enough: a free-tier key is limited per
+    // minute, and eight back-to-back generations (sixteen in --product, which also repairs)
+    // will trip it. The harness must not manufacture the failures it is measuring.
+    if (runMode() === "live" && index > 0) await sleep(PACE_MS);
+
     const result = await runScenario(scenario);
     results.push(result);
 
-    const status = result.passed ? green("PASS") : red("FAIL");
+    const status =
+      result.outcome === "pass" ? green("PASS") : result.outcome === "fail" ? red("FAIL") : yellow("ERROR");
     console.log(
       `\n  ${status}  ${result.scenario.id}. ${result.scenario.physicianId} — ${result.scenario.concern} ${dim(`[${result.source}]`)}`,
     );
+
+    if (result.outcome === "error") {
+      console.log(`        ${yellow("!")} no brief generated${result.errorMessage ? yellow(`  → ${result.errorMessage}`) : ""}`);
+      console.log(dim("          Infrastructure, not grounding. Excluded from the quality rate."));
+    }
 
     for (const check of result.checks) {
       if (check.ok) {
@@ -289,28 +359,51 @@ async function main() {
   }
 
   const deterministicPassed = deterministic.filter((c) => c.ok).length;
-  const scenariosPassed = results.filter((r) => r.passed).length;
+  const passed = results.filter((r) => r.outcome === "pass").length;
+  const failed = results.filter((r) => r.outcome === "fail").length;
+  const errored = results.filter((r) => r.outcome === "error").length;
+  const completed = passed + failed;
 
   console.log(bold("\n\nSummary"));
-  console.log(`  Deterministic: ${deterministicPassed}/${deterministic.length}`);
-  console.log(`  Golden scenarios: ${scenariosPassed}/${results.length}`);
+  console.log(`  Deterministic:      ${deterministicPassed}/${deterministic.length}`);
+  console.log(
+    `  Golden scenarios:   ${passed} passed, ${failed} failed` + (errored ? `, ${yellow(`${errored} errored`)}` : ""),
+  );
 
-  const allPassed = deterministicPassed === deterministic.length && scenariosPassed === results.length;
+  // The headline metric is computed over briefs that were actually produced. An errored
+  // scenario is missing data, not a bad brief, and averaging it in would understate the
+  // prompt for a reason that has nothing to do with the prompt.
+  if (completed > 0) {
+    const rate = ((passed / completed) * 100).toFixed(0);
+    console.log(`  Quality rate:       ${bold(`${passed}/${completed}`)} of generated briefs (${rate}%)`);
+  }
 
-  if (allPassed) {
+  if (errored > 0) {
+    console.log(
+      yellow(
+        `\n  ${errored} scenario(s) never generated, so this run is INCOMPLETE.\n` +
+          "  Re-run when the provider is available. Do not quote the rate above as a result.",
+      ),
+    );
+  }
+
+  const clean = deterministicPassed === deterministic.length && failed === 0 && errored === 0;
+
+  if (clean) {
     console.log(green(bold("\n  All checks passed.\n")));
-  } else {
-    console.log(red(bold("\n  Failures above.\n")));
+  } else if (failed > 0) {
+    console.log(red(bold("\n  Assertion failures above.\n")));
   }
 
   console.log(
     dim(
       "  These are author-labeled regression checks over eight fictional scenarios.\n" +
-        "  They are not a claim of real-world accuracy.\n",
+        "  They are a dev set: the prompt was iterated against them, so they measure regression,\n" +
+        "  not held-out generalisation. They are not a claim of real-world accuracy.\n",
     ),
   );
 
-  process.exit(allPassed ? 0 : 1);
+  process.exit(clean ? 0 : 1);
 }
 
 main().catch((error) => {
