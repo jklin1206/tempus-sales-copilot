@@ -81,10 +81,30 @@ export const googleProvider: ModelProvider = {
       const detail = await response.text().catch(() => "");
 
       if (response.status === 429 || response.status >= 500) {
-        // Gemini's free tier is rate limited per minute, and it tells you how long to wait:
-        // the error body carries a RetryInfo with a retryDelay like "38s". Honoring it is the
-        // difference between a retry that works and three that burn the budget faster. The
-        // header is checked first because a proxy may set it instead.
+        // A 429 is two different failures wearing the same status code, and telling them apart
+        // is the whole point of this branch.
+        //
+        // A PER-MINUTE limit is transient: Gemini says "wait 38s" and the identical call then
+        // succeeds. Waiting is the correct response, and the error body carries a RetryInfo with
+        // a retryDelay to wait for. The header is checked first because a proxy may set it instead.
+        //
+        // A PER-DAY quota is not transient in any useful sense. The free tier allows 500 requests
+        // per model per day, and when that is gone it is gone until midnight Pacific. Google still
+        // returns a retryDelay (35s, 59s), and honoring it is actively harmful: the caller sleeps
+        // a minute, retries, gets the same 429, sleeps again, and the request dies of a function
+        // timeout instead of telling anyone what went wrong. That is exactly how a spent quota came
+        // to look like a broken API key.
+        //
+        // So the day quota is reported as unavailable, not retried, and it says what it is.
+        const quotaId = /"quotaId"\s*:\s*"([^"]+)"/.exec(detail)?.[1] ?? "";
+
+        if (/PerDay/i.test(quotaId)) {
+          throw new ModelUnavailableError(
+            "Google's free-tier daily quota for this model is exhausted (500 requests per day). " +
+              "It resets at midnight Pacific. Enable billing on the API project, or use demo mode until then.",
+          );
+        }
+
         const headerSeconds = Number(response.headers.get("retry-after"));
         const bodySeconds = Number(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/.exec(detail)?.[1]);
         const retryAfterMs = (headerSeconds || bodySeconds || 0) * 1000;
